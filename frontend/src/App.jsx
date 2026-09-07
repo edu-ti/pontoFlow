@@ -11,6 +11,7 @@ import { UserProfilePage } from './pages/UserProfilePage';
 import { GuiaPage } from './pages/GuiaPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { MenuDrawerPage } from './pages/MenuDrawerPage';
+import { InstallAppModal } from './components/InstallAppModal';
 
 export function App() {
   const [token, setCurrentToken] = useState(getToken());
@@ -22,6 +23,32 @@ export function App() {
   // Sub-rotas internas
   // null | 'config_trabalho' | 'config_notificacoes' | 'config_marcadores' | 'config_usuario' | 'guia_instrucoes' | 'relatorios'
   const [subView, setSubView] = useState(null);
+
+  // Controle de Instalação PWA (Android / iOS)
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [installModalOpen, setInstallModalOpen] = useState(false);
+
+  useEffect(() => {
+    // Captura o evento nativo de instalação do Android / Chrome
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      console.log('Evento beforeinstallprompt capturado no PontoFlow.');
+    };
+
+    const handleAppInstalled = () => {
+      setDeferredPrompt(null);
+      console.log('PontoFlow instalado com sucesso no dispositivo.');
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
 
   useEffect(() => {
     const handleLogout = () => {
@@ -103,7 +130,8 @@ export function App() {
               else if (dest === 'config_usuario') setSubView('config_usuario');
               else setSubView(dest);
             }} 
-            onLogout={handleLogout} 
+            onLogout={handleLogout}
+            onOpenInstall={() => setInstallModalOpen(true)}
           />
         );
       case 'configuracoes':
@@ -114,7 +142,8 @@ export function App() {
               if (dest === 'dia') setActiveTab('dia');
               else if (dest === 'logout') handleLogout();
               else setSubView(dest);
-            }} 
+            }}
+            onOpenInstall={() => setInstallModalOpen(true)}
           />
         );
       case 'dia':
@@ -131,6 +160,14 @@ export function App() {
 
       {/* Barra de Navegação Inferior Ponto Fácil */}
       <BottomNav activeTab={activeTab} onSelectTab={handleSelectTab} />
+
+      {/* Modal de Instalação no Celular (Android / iOS) */}
+      <InstallAppModal
+        isOpen={installModalOpen}
+        onClose={() => setInstallModalOpen(false)}
+        deferredPrompt={deferredPrompt}
+        onInstalled={() => setDeferredPrompt(null)}
+      />
     </div>
   );
 }

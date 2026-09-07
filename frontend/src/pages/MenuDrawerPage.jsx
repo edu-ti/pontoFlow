@@ -7,10 +7,12 @@ import {
   LogOut, 
   ChevronRight, 
   ShieldCheck, 
-  Clock 
+  Clock,
+  Smartphone,
+  Sparkles
 } from 'lucide-react';
 
-export function MenuDrawerPage({ user, onNavigate, onLogout }) {
+export function MenuDrawerPage({ user, onNavigate, onLogout, onOpenInstall }) {
   const companyName = user?.nome_empresa || 'Empresa';
 
   return (
@@ -59,8 +61,34 @@ export function MenuDrawerPage({ user, onNavigate, onLogout }) {
           </div>
         </div>
 
-        {/* Grupo de Ações de Relatórios Knup */}
+        {/* Grupo de Ações de Relatórios Knup e Instalação */}
         <div className="pf-list-group">
+          {/* Instalar Aplicativo no Celular (Android / iOS) */}
+          <div 
+            className="pf-list-item" 
+            onClick={onOpenInstall}
+            style={{ 
+              border: '1px solid rgba(59, 130, 246, 0.3)', 
+              background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(16, 185, 129, 0.08))' 
+            }}
+          >
+            <div className="pf-list-left">
+              <div className="pf-badge-icon" style={{ background: 'linear-gradient(135deg, #2563eb, #10b981)', color: '#fff' }}>
+                <Smartphone size={20} />
+              </div>
+              <div className="pf-list-text">
+                <span className="pf-list-title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  Instalar como App
+                  <span style={{ fontSize: '10px', background: 'var(--emerald)', color: '#fff', padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                    Android & iOS
+                  </span>
+                </span>
+                <span className="pf-list-sub">Adicionar à tela de início do seu celular</span>
+              </div>
+            </div>
+            <ChevronRight size={18} className="pf-arrow-right" />
+          </div>
+
           {/* Relatório e Espelho Knup */}
           <div className="pf-list-item" onClick={() => onNavigate('relatorios')}>
             <div className="pf-list-left">

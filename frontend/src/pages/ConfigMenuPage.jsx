@@ -6,10 +6,11 @@ import {
   Tag, 
   BookOpen, 
   ChevronRight, 
-  ExternalLink 
+  ExternalLink,
+  Smartphone
 } from 'lucide-react';
 
-export function ConfigMenuPage({ user, onNavigate }) {
+export function ConfigMenuPage({ user, onNavigate, onOpenInstall }) {
   const companyName = user?.nome_empresa || 'Empresa';
 
   return (
@@ -104,6 +105,22 @@ export function ConfigMenuPage({ user, onNavigate }) {
               </div>
             </div>
             <ExternalLink size={16} className="pf-arrow-right" />
+          </div>
+        </div>
+
+        {/* Instalar Aplicativo no Celular */}
+        <div className="pf-list-group" style={{ marginTop: '8px' }}>
+          <div className="pf-list-item" onClick={onOpenInstall}>
+            <div className="pf-list-left">
+              <div className="pf-badge-icon" style={{ background: 'linear-gradient(135deg, #2563eb, #10b981)', color: '#fff' }}>
+                <Smartphone size={20} />
+              </div>
+              <div className="pf-list-text">
+                <span className="pf-list-title">Instalar como Aplicativo</span>
+                <span className="pf-list-sub">Adicionar à tela de início (Android & iOS)</span>
+              </div>
+            </div>
+            <ChevronRight size={18} className="pf-arrow-right" />
           </div>
         </div>
 
