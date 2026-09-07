@@ -1,31 +1,34 @@
 import React from 'react';
-import { Clock, FileText, SlidersHorizontal } from 'lucide-react';
+import { Menu, Calendar, Settings } from 'lucide-react';
 
 export function BottomNav({ activeTab, onSelectTab }) {
   return (
-    <nav className="bottom-nav">
+    <nav className="bottom-nav-pf" aria-label="Navegação inferior">
       <button 
-        className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
-        onClick={() => onSelectTab('dashboard')}
+        type="button"
+        className={`nav-item-pf ${activeTab === 'menu' ? 'active' : ''}`}
+        onClick={() => onSelectTab('menu')}
       >
-        <Clock size={22} />
-        <span>Bater Ponto</span>
+        <Menu size={20} />
+        <span>Menu</span>
       </button>
 
       <button 
-        className={`nav-item ${activeTab === 'reports' ? 'active' : ''}`}
-        onClick={() => onSelectTab('reports')}
+        type="button"
+        className={`nav-item-pf ${activeTab === 'dia' ? 'active' : ''}`}
+        onClick={() => onSelectTab('dia')}
       >
-        <FileText size={22} />
-        <span>Relatórios Knup</span>
+        <Calendar size={20} />
+        <span>Dia</span>
       </button>
 
       <button 
-        className={`nav-item ${activeTab === 'shift' ? 'active' : ''}`}
-        onClick={() => onSelectTab('shift')}
+        type="button"
+        className={`nav-item-pf ${activeTab === 'configuracoes' ? 'active' : ''}`}
+        onClick={() => onSelectTab('configuracoes')}
       >
-        <SlidersHorizontal size={22} />
-        <span>Meu Turno</span>
+        <Settings size={20} />
+        <span>Configurações</span>
       </button>
     </nav>
   );
