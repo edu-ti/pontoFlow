@@ -38,6 +38,69 @@ export function DashboardPage({ user }) {
   // Bottom Sheet "O que deseja adicionar?" (Captura 5)
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
+  // Estados para o Modal de Tag (Feriado, Folga, Falta, Ajuste Manual)
+  const [tagModalOpen, setTagModalOpen] = useState(false);
+  const [tagModalTitle, setTagModalTitle] = useState('');
+  const [selectedTagType, setSelectedTagType] = useState('');
+  const [tagDataRegistro, setTagDataRegistro] = useState(new Date().toISOString().split('T')[0]);
+  const [tagObservacao, setTagObservacao] = useState('');
+  const [tagSaving, setTagSaving] = useState(false);
+
+  // Estados para Ajuste Manual de Horários
+  const [manualEntrada, setManualEntrada] = useState('08:00');
+  const [manualSaidaAlmoco, setManualSaidaAlmoco] = useState('12:00');
+  const [manualVoltaAlmoco, setManualVoltaAlmoco] = useState('13:00');
+  const [manualSaidaExpediente, setManualSaidaExpediente] = useState('18:00');
+
+  const handleOpenTagModal = (type, title) => {
+    setIsSheetOpen(false);
+    setSelectedTagType(type);
+    setTagModalTitle(title);
+    setTagDataRegistro(selectedDate.toISOString().split('T')[0]);
+    setTagObservacao('');
+
+    if (type === 'ajuste_manual') {
+      setManualEntrada(todayData?.ponto?.entrada_expediente?.slice(0, 5) || '08:00');
+      setManualSaidaAlmoco(todayData?.ponto?.saida_almoco?.slice(0, 5) || '12:00');
+      setManualVoltaAlmoco(todayData?.ponto?.volta_almoco?.slice(0, 5) || '13:00');
+      setManualSaidaExpediente(todayData?.ponto?.saida_expediente?.slice(0, 5) || '18:00');
+    }
+
+    setTagModalOpen(true);
+  };
+
+  const handleSaveTag = async (e) => {
+    e.preventDefault();
+    setTagSaving(true);
+    setErrorMsg(null);
+
+    try {
+      const payload = {
+        data_registro: tagDataRegistro,
+        tag: selectedTagType,
+        observacao: tagObservacao
+      };
+
+      if (selectedTagType === 'ajuste_manual') {
+        payload.entrada_expediente = manualEntrada ? `${manualEntrada}:00` : null;
+        payload.saida_almoco = manualSaidaAlmoco ? `${manualSaidaAlmoco}:00` : null;
+        payload.volta_almoco = manualVoltaAlmoco ? `${manualVoltaAlmoco}:00` : null;
+        payload.saida_expediente = manualSaidaExpediente ? `${manualSaidaExpediente}:00` : null;
+      }
+
+      const res = await api.ponto.registrarTag(payload);
+      playSuccessChime();
+      setFeedbackMsg(res.message || 'Salvo com sucesso!');
+      setTagModalOpen(false);
+      await fetchTodayStatus();
+      setTimeout(() => setFeedbackMsg(null), 4000);
+    } catch (err) {
+      setErrorMsg(err.message || 'Erro ao registrar evento.');
+    } finally {
+      setTagSaving(false);
+    }
+  };
+
   // Buscar status diário
   const fetchTodayStatus = useCallback(async () => {
     try {
@@ -254,6 +317,49 @@ export function DashboardPage({ user }) {
           </div>
         )}
 
+        {/* Tag Ativa no Dia (Feriado, Folga, Falta, Trabalho Externo, Férias, Ajuste) */}
+        {todayData?.ponto?.tag && (
+          <div style={{
+            background: 'rgba(59, 130, 246, 0.15)',
+            border: '1px solid #3b82f6',
+            borderRadius: 'var(--radius-md)',
+            padding: '12px 14px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            fontSize: '13px',
+            color: '#93c5fd'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '18px' }}>
+                {todayData.ponto.tag === 'feriado' ? '🍈' :
+                 todayData.ponto.tag === 'folga' ? '🛏️' :
+                 todayData.ponto.tag === 'falta' ? '💊' :
+                 todayData.ponto.tag === 'trabalho_externo' ? '💼' :
+                 todayData.ponto.tag === 'ferias' ? '⛱️' : '❇️'}
+              </span>
+              <div>
+                <strong style={{ textTransform: 'capitalize', color: '#fff' }}>
+                  {todayData.ponto.tag.replace('_', ' ')}
+                </strong>
+                {todayData.ponto.observacao && (
+                  <div style={{ fontSize: '11px', color: '#cbd5e1' }}>
+                    {todayData.ponto.observacao}
+                  </div>
+                )}
+              </div>
+            </div>
+            <button
+              type="button"
+              className="pf-icon-btn"
+              onClick={() => handleOpenTagModal('ajuste_manual', 'Editar Ajuste do Dia')}
+              style={{ fontSize: '11px', color: '#38bdf8' }}
+            >
+              Editar
+            </button>
+          </div>
+        )}
+
         {/* Lista das 4 Batidas do Dia com Trava Sequencial */}
         <div className="pf-list-group">
           {[
@@ -358,52 +464,179 @@ export function DashboardPage({ user }) {
             </div>
 
             {/* 2. Trabalho externo */}
-            <div className="pf-sheet-item" onClick={() => { alert('Trabalho externo adicionado!'); setIsSheetOpen(false); }}>
+            <div className="pf-sheet-item" onClick={() => handleOpenTagModal('trabalho_externo', 'Trabalho externo')}>
               <Briefcase size={20} style={{ color: '#d97706' }} />
               <span className="pf-sheet-item-label">Trabalho externo</span>
             </div>
 
             {/* 3. Falta */}
-            <div className="pf-sheet-item" onClick={() => { alert('Falta registrada para conferência!'); setIsSheetOpen(false); }}>
+            <div className="pf-sheet-item" onClick={() => handleOpenTagModal('falta', 'Falta')}>
               <Pill size={20} style={{ color: '#ef4444' }} />
               <span className="pf-sheet-item-label">Falta</span>
             </div>
 
             {/* 4. Folga */}
-            <div className="pf-sheet-item" onClick={() => { alert('Folga registrada!'); setIsSheetOpen(false); }}>
+            <div className="pf-sheet-item" onClick={() => handleOpenTagModal('folga', 'Folga')}>
               <Bed size={20} style={{ color: '#facc15' }} />
               <span className="pf-sheet-item-label">Folga</span>
             </div>
 
             {/* 5. Feriado */}
-            <div className="pf-sheet-item" onClick={() => { alert('Feriado marcado!'); setIsSheetOpen(false); }}>
+            <div className="pf-sheet-item" onClick={() => handleOpenTagModal('feriado', 'Feriado')}>
               <Sun size={20} style={{ color: '#34d399' }} />
               <span className="pf-sheet-item-label">Feriado</span>
             </div>
 
             {/* 6. Férias */}
-            <div className="pf-sheet-item" onClick={() => { alert('Férias registradas!'); setIsSheetOpen(false); }}>
+            <div className="pf-sheet-item" onClick={() => handleOpenTagModal('ferias', 'Férias')}>
               <Umbrella size={20} style={{ color: '#fb923c' }} />
               <span className="pf-sheet-item-label">Férias</span>
             </div>
 
             {/* 7. Ajuste manual */}
-            <div className="pf-sheet-item" onClick={() => { alert('Ajuste manual para conferência com espelho Knup!'); setIsSheetOpen(false); }}>
+            <div className="pf-sheet-item" onClick={() => handleOpenTagModal('ajuste_manual', 'Ajuste manual de ponto')}>
               <Sparkles size={20} style={{ color: '#c084fc' }} />
               <span className="pf-sheet-item-label">Ajuste manual</span>
             </div>
 
             {/* 8. Carga horária diferente */}
-            <div className="pf-sheet-item" onClick={() => { alert('Carga horária alterada para hoje.'); setIsSheetOpen(false); }}>
+            <div className="pf-sheet-item" onClick={() => handleOpenTagModal('carga_diferente', 'Carga horária diferente')}>
               <Clock size={20} style={{ color: '#f472b6' }} />
               <span className="pf-sheet-item-label">Carga horária diferente</span>
             </div>
 
             {/* 9. Zerar banco de horas */}
-            <div className="pf-sheet-item" onClick={() => { alert('Banco de horas zerado.'); setIsSheetOpen(false); }}>
+            <div className="pf-sheet-item" onClick={() => {
+              if (confirm('Deseja zerar o saldo do banco de horas para este período?')) {
+                setFeedbackMsg('Banco de horas zerado.');
+                setIsSheetOpen(false);
+              }
+            }}>
               <History size={20} style={{ color: '#22d3ee' }} />
               <span className="pf-sheet-item-label">Zerar banco de horas</span>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------- */}
+      {/* MODAL DE CADASTRO DE TAG (Feriado, Folga, Falta, Ajuste)      */}
+      {/* ------------------------------------------------------------- */}
+      {tagModalOpen && (
+        <div className="pf-sheet-backdrop" onClick={() => setTagModalOpen(false)}>
+          <div className="pf-sheet-modal" onClick={(e) => e.stopPropagation()} style={{ maxHeight: '90vh' }}>
+            <div className="pf-sheet-handle"></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 className="pf-sheet-title">{tagModalTitle}</h2>
+              <button type="button" className="pf-icon-btn" onClick={() => setTagModalOpen(false)}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveTag} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div className="form-group">
+                <label className="form-label">Data do Registro</label>
+                <input 
+                  type="date" 
+                  className="form-input" 
+                  value={tagDataRegistro} 
+                  onChange={(e) => setTagDataRegistro(e.target.value)}
+                  required 
+                />
+              </div>
+
+              {selectedTagType === 'ajuste_manual' ? (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div className="form-group">
+                      <label className="form-label">1. Entrada</label>
+                      <input 
+                        type="time" 
+                        className="form-input" 
+                        value={manualEntrada} 
+                        onChange={(e) => setManualEntrada(e.target.value)} 
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">2. Saída Almoço</label>
+                      <input 
+                        type="time" 
+                        className="form-input" 
+                        value={manualSaidaAlmoco} 
+                        onChange={(e) => setManualSaidaAlmoco(e.target.value)} 
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">3. Volta Almoço</label>
+                      <input 
+                        type="time" 
+                        className="form-input" 
+                        value={manualVoltaAlmoco} 
+                        onChange={(e) => setManualVoltaAlmoco(e.target.value)} 
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">4. Fim Expediente</label>
+                      <input 
+                        type="time" 
+                        className="form-input" 
+                        value={manualSaidaExpediente} 
+                        onChange={(e) => setManualSaidaExpediente(e.target.value)} 
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Motivo do Ajuste</label>
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      placeholder="Ex: Esqueci de bater no relógio físico Knup"
+                      value={tagObservacao}
+                      onChange={(e) => setTagObservacao(e.target.value)}
+                    />
+                  </div>
+                </>
+              ) : (
+                <div className="form-group">
+                  <label className="form-label">Descrição / Observação</label>
+                  <input 
+                    type="text" 
+                    className="form-input" 
+                    placeholder={
+                      selectedTagType === 'feriado' ? 'Ex: Independência do Brasil, Tiradentes...' :
+                      selectedTagType === 'folga' ? 'Ex: Folga compensatória, folga de escala...' :
+                      selectedTagType === 'falta' ? 'Ex: Atestado médico de 1 dia...' :
+                      selectedTagType === 'ferias' ? 'Ex: Primeiro período de férias...' :
+                      'Observação opcional'
+                    }
+                    value={tagObservacao}
+                    onChange={(e) => setTagObservacao(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                <button 
+                  type="button" 
+                  className="btn-secondary" 
+                  style={{ flex: 1 }} 
+                  onClick={() => setTagModalOpen(false)}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn-primary" 
+                  style={{ flex: 2 }}
+                  disabled={tagSaving}
+                >
+                  {tagSaving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                  <span>Salvar {tagModalTitle}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

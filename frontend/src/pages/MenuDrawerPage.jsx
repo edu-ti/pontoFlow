@@ -88,6 +88,19 @@ export function MenuDrawerPage({ user, onNavigate, onLogout }) {
             </div>
             <ChevronRight size={18} className="pf-arrow-right" />
           </div>
+          {/* Configurações de Usuário e Empresa */}
+          <div className="pf-list-item" onClick={() => onNavigate('config_usuario')}>
+            <div className="pf-list-left">
+              <div className="pf-badge-icon" style={{ backgroundColor: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa' }}>
+                <User size={20} />
+              </div>
+              <div className="pf-list-text">
+                <span className="pf-list-title">Meus Dados & Empresa</span>
+                <span className="pf-list-sub">Editar nome, empresa e alterar senha</span>
+              </div>
+            </div>
+            <ChevronRight size={18} className="pf-arrow-right" />
+          </div>
         </div>
 
         {/* Grupo de Configurações e Logout */}

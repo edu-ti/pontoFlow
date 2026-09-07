@@ -191,3 +191,75 @@ export async function updateSchedule(request, reply) {
     return reply.status(500).send({ error: 'Erro ao atualizar jornada.', details: err.message });
   }
 }
+
+export async function updateProfile(request, reply) {
+  try {
+    const userId = request.user.id;
+    const { nome_completo, nome_empresa, senha_atual, nova_senha } = request.body || {};
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const userRes = await client.query('SELECT * FROM usuarios WHERE id = $1', [userId]);
+      if (userRes.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return reply.status(404).send({ error: 'Usuário não encontrado.' });
+      }
+
+      const currentUser = userRes.rows[0];
+
+      // Alteração de senha
+      if (nova_senha && nova_senha.trim()) {
+        if (!senha_atual) {
+          await client.query('ROLLBACK');
+          return reply.status(400).send({ error: 'Para alterar a senha, informe sua senha atual.' });
+        }
+        const senhaOk = await bcrypt.compare(senha_atual, currentUser.senha);
+        if (!senhaOk) {
+          await client.query('ROLLBACK');
+          return reply.status(400).send({ error: 'Senha atual incorreta.' });
+        }
+        const salt = await bcrypt.genSalt(10);
+        const novoHash = await bcrypt.hash(nova_senha, salt);
+        await client.query('UPDATE usuarios SET senha = $1 WHERE id = $2', [novoHash, userId]);
+      }
+
+      // Atualizar nome da empresa
+      if (nome_empresa && nome_empresa.trim()) {
+        await client.query('UPDATE empresas SET nome_empresa = $1 WHERE id = $2', [nome_empresa.trim(), currentUser.empresa_id]);
+      }
+
+      // Atualizar nome do colaborador
+      if (nome_completo && nome_completo.trim()) {
+        await client.query('UPDATE usuarios SET nome_completo = $1 WHERE id = $2', [nome_completo.trim(), userId]);
+      }
+
+      await client.query('COMMIT');
+
+      // Retornar usuário atualizado
+      const updatedRes = await pool.query(
+        `SELECT u.id, u.empresa_id, u.nome_completo, u.login,
+                u.entrada_seg_qui, u.saida_seg_qui, u.saida_sexta, u.tempo_intervalo_minutos,
+                e.nome_empresa
+         FROM usuarios u
+         JOIN empresas e ON u.empresa_id = e.id
+         WHERE u.id = $1`,
+        [userId]
+      );
+
+      return reply.send({
+        message: 'Perfil e empresa atualizados com sucesso!',
+        user: updatedRes.rows[0]
+      });
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    request.log.error(err);
+    return reply.status(500).send({ error: 'Erro ao atualizar dados.', details: err.message });
+  }
+}

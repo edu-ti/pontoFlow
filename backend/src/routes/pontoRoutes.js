@@ -1,4 +1,4 @@
-import { getTodayStatus, baterPonto } from '../controllers/pontoController.js';
+import { getTodayStatus, baterPonto, registrarTagOuAjuste } from '../controllers/pontoController.js';
 import { authenticate } from '../middlewares/authMiddleware.js';
 
 export default async function pontoRoutes(fastify, options) {
@@ -10,4 +10,7 @@ export default async function pontoRoutes(fastify, options) {
 
   // Bater ponto (Entrada, Saída Almoço, Volta Almoço, Fim Expediente)
   fastify.post('/bater', baterPonto);
+
+  // Registrar tag do dia (feriado, folga, falta, trabalho externo, férias, ajuste manual)
+  fastify.post('/registrar-tag', registrarTagOuAjuste);
 }

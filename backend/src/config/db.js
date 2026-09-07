@@ -66,15 +66,27 @@ export async function initDbSchema() {
           saida_almoco TIME,
           volta_almoco TIME,
           saida_expediente TIME,
+          tag VARCHAR(50),
           observacao VARCHAR(500),
           created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
           CONSTRAINT unq_usuario_data UNIQUE (usuario_id, data_registro)
       );
 
+      ALTER TABLE registros_ponto ADD COLUMN IF NOT EXISTS tag VARCHAR(50);
+
+      CREATE TABLE IF NOT EXISTS marcadores (
+          id SERIAL PRIMARY KEY,
+          usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+          nome VARCHAR(100) NOT NULL,
+          cor VARCHAR(20) NOT NULL DEFAULT '#3b82f6',
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+
       CREATE INDEX IF NOT EXISTS idx_usuarios_empresa ON usuarios(empresa_id);
       CREATE INDEX IF NOT EXISTS idx_registros_usuario_data ON registros_ponto(usuario_id, data_registro);
       CREATE INDEX IF NOT EXISTS idx_registros_data ON registros_ponto(data_registro);
+      CREATE INDEX IF NOT EXISTS idx_marcadores_usuario ON marcadores(usuario_id);
     `);
     client.release();
     console.log('[DATABASE] Esquema de tabelas verificado e pronto.');

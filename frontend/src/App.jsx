@@ -7,8 +7,10 @@ import { ConfigMenuPage } from './pages/ConfigMenuPage';
 import { ShiftDaysPage } from './pages/ShiftDaysPage';
 import { NotificationSettingsPage } from './pages/NotificationSettingsPage';
 import { MarcadoresPage } from './pages/MarcadoresPage';
+import { UserProfilePage } from './pages/UserProfilePage';
 import { GuiaPage } from './pages/GuiaPage';
 import { ReportsPage } from './pages/ReportsPage';
+import { MenuDrawerPage } from './pages/MenuDrawerPage';
 
 export function App() {
   const [token, setCurrentToken] = useState(getToken());
@@ -18,7 +20,7 @@ export function App() {
   const [activeTab, setActiveTab] = useState('dia');
 
   // Sub-rotas internas
-  // null | 'config_trabalho' | 'config_notificacoes' | 'config_marcadores' | 'guia_instrucoes' | 'relatorios'
+  // null | 'config_trabalho' | 'config_notificacoes' | 'config_marcadores' | 'config_usuario' | 'guia_instrucoes' | 'relatorios'
   const [subView, setSubView] = useState(null);
 
   useEffect(() => {
@@ -80,6 +82,9 @@ export function App() {
     if (subView === 'config_marcadores') {
       return <MarcadoresPage user={user} onBack={() => setSubView(null)} />;
     }
+    if (subView === 'config_usuario') {
+      return <UserProfilePage user={user} onBack={() => setSubView(null)} onLogout={handleLogout} />;
+    }
     if (subView === 'guia_instrucoes') {
       return <GuiaPage user={user} onBack={() => setSubView(null)} />;
     }
@@ -91,9 +96,14 @@ export function App() {
     switch (activeTab) {
       case 'menu':
         return (
-          <ReportsPage 
+          <MenuDrawerPage 
             user={user} 
-            onBack={() => setActiveTab('dia')} 
+            onNavigate={(dest) => {
+              if (dest === 'relatorios') setSubView('relatorios');
+              else if (dest === 'config_usuario') setSubView('config_usuario');
+              else setSubView(dest);
+            }} 
+            onLogout={handleLogout} 
           />
         );
       case 'configuracoes':
@@ -102,6 +112,7 @@ export function App() {
             user={user} 
             onNavigate={(dest) => {
               if (dest === 'dia') setActiveTab('dia');
+              else if (dest === 'logout') handleLogout();
               else setSubView(dest);
             }} 
           />

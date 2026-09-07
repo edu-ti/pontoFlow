@@ -6,6 +6,7 @@ import { testConnection, initDbSchema } from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import pontoRoutes from './routes/pontoRoutes.js';
 import relatorioRoutes from './routes/relatorioRoutes.js';
+import marcadoresRoutes from './routes/marcadoresRoutes.js';
 
 dotenv.config();
 
@@ -44,6 +45,7 @@ app.get('/health', async (request, reply) => {
 await app.register(authRoutes, { prefix: '/api/auth' });
 await app.register(pontoRoutes, { prefix: '/api/ponto' });
 await app.register(relatorioRoutes, { prefix: '/api/relatorios' });
+await app.register(marcadoresRoutes, { prefix: '/api/marcadores' });
 
 // Inicialização do Servidor
 const PORT = parseInt(process.env.PORT || '3001', 10);

@@ -76,6 +76,19 @@ export function ConfigMenuPage({ user, onNavigate }) {
             </div>
             <ChevronRight size={18} className="pf-arrow-right" />
           </div>
+          {/* 4. Colaborador & Empresa */}
+          <div className="pf-list-item" onClick={() => onNavigate('config_usuario')}>
+            <div className="pf-list-left">
+              <div className="pf-badge-icon" style={{ backgroundColor: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa' }}>
+                <Settings size={20} />
+              </div>
+              <div className="pf-list-text">
+                <span className="pf-list-title">Colaborador & Empresa</span>
+                <span className="pf-list-sub">Editar nome, empresa e senha de acesso</span>
+              </div>
+            </div>
+            <ChevronRight size={18} className="pf-arrow-right" />
+          </div>
         </div>
 
         {/* Guia de Configuração do Emprego */}
@@ -91,6 +104,21 @@ export function ConfigMenuPage({ user, onNavigate }) {
               </div>
             </div>
             <ExternalLink size={16} className="pf-arrow-right" />
+          </div>
+        </div>
+
+        {/* Sair do Sistema */}
+        <div className="pf-list-group" style={{ marginTop: '8px' }}>
+          <div className="pf-list-item" onClick={() => onNavigate('logout')}>
+            <div className="pf-list-left">
+              <div className="pf-badge-icon" style={{ backgroundColor: 'rgba(239, 68, 68, 0.15)', color: 'var(--rose)' }}>
+                <ExternalLink size={20} />
+              </div>
+              <div className="pf-list-text">
+                <span className="pf-list-title" style={{ color: 'var(--rose)' }}>Sair do Sistema</span>
+                <span className="pf-list-sub">Desconectar sua conta no celular</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

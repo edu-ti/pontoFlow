@@ -36,7 +36,7 @@ export async function getTodayStatus(request, reply) {
               TO_CHAR(saida_almoco, 'HH24:MI:SS') as saida_almoco,
               TO_CHAR(volta_almoco, 'HH24:MI:SS') as volta_almoco,
               TO_CHAR(saida_expediente, 'HH24:MI:SS') as saida_expediente,
-              observacao
+              tag, observacao
        FROM registros_ponto
        WHERE usuario_id = $1 AND data_registro = $2`,
       [userId, serverDate]
@@ -50,6 +50,7 @@ export async function getTodayStatus(request, reply) {
       saida_almoco: null,
       volta_almoco: null,
       saida_expediente: null,
+      tag: null,
       observacao: null
     };
 
@@ -227,6 +228,90 @@ export async function baterPonto(request, reply) {
     await client.query('ROLLBACK');
     request.log.error(err);
     return reply.status(500).send({ error: 'Erro ao registrar batida de ponto.', details: err.message });
+  } finally {
+    client.release();
+  }
+}
+
+export async function registrarTagOuAjuste(request, reply) {
+  const userId = request.user.id;
+  const { 
+    data_registro, 
+    tag, 
+    observacao, 
+    entrada_expediente, 
+    saida_almoco, 
+    volta_almoco, 
+    saida_expediente 
+  } = request.body || {};
+
+  if (!tag) {
+    return reply.status(400).send({ error: 'A tag é obrigatória (ex: feriado, folga, falta, ajuste_manual).' });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Usar data fornecida ou data atual do servidor
+    let dateToUse = data_registro;
+    if (!dateToUse) {
+      const timeRes = await client.query('SELECT CURRENT_DATE as data_hoje');
+      dateToUse = timeRes.rows[0].data_hoje;
+    }
+
+    const upsertRes = await client.query(`
+      INSERT INTO registros_ponto (
+        usuario_id, data_registro, tag, observacao,
+        entrada_expediente, saida_almoco, volta_almoco, saida_expediente,
+        updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP)
+      ON CONFLICT (usuario_id, data_registro)
+      DO UPDATE SET
+        tag = EXCLUDED.tag,
+        observacao = COALESCE(EXCLUDED.observacao, registros_ponto.observacao),
+        entrada_expediente = COALESCE(EXCLUDED.entrada_expediente, registros_ponto.entrada_expediente),
+        saida_almoco = COALESCE(EXCLUDED.saida_almoco, registros_ponto.saida_almoco),
+        volta_almoco = COALESCE(EXCLUDED.volta_almoco, registros_ponto.volta_almoco),
+        saida_expediente = COALESCE(EXCLUDED.saida_expediente, registros_ponto.saida_expediente),
+        updated_at = CURRENT_TIMESTAMP
+      RETURNING 
+        id, usuario_id, data_registro,
+        TO_CHAR(entrada_expediente, 'HH24:MI:SS') as entrada_expediente,
+        TO_CHAR(saida_almoco, 'HH24:MI:SS') as saida_almoco,
+        TO_CHAR(volta_almoco, 'HH24:MI:SS') as volta_almoco,
+        TO_CHAR(saida_expediente, 'HH24:MI:SS') as saida_expediente,
+        tag, observacao
+    `, [
+      userId, 
+      dateToUse, 
+      tag, 
+      observacao || null, 
+      entrada_expediente || null, 
+      saida_almoco || null, 
+      volta_almoco || null, 
+      saida_expediente || null
+    ]);
+
+    await client.query('COMMIT');
+
+    const LABELS = {
+      feriado: 'Feriado',
+      folga: 'Folga',
+      falta: 'Falta',
+      trabalho_externo: 'Trabalho Externo',
+      ferias: 'Férias',
+      ajuste_manual: 'Ajuste Manual'
+    };
+
+    return reply.send({
+      message: `${LABELS[tag] || tag} registrado com sucesso para o dia ${dateToUse}!`,
+      ponto: upsertRes.rows[0]
+    });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    request.log.error(err);
+    return reply.status(500).send({ error: 'Erro ao registrar evento no ponto.', details: err.message });
   } finally {
     client.release();
   }

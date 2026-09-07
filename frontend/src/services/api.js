@@ -74,6 +74,10 @@ export const api = {
     updateSchedule: (schedule) => request('/auth/schedule', {
       method: 'PUT',
       body: JSON.stringify(schedule)
+    }),
+    updateProfile: (profileData) => request('/auth/profile', {
+      method: 'PUT',
+      body: JSON.stringify(profileData)
     })
   },
   ponto: {
@@ -81,6 +85,24 @@ export const api = {
     bater: (tipo, observacao = '') => request('/ponto/bater', {
       method: 'POST',
       body: JSON.stringify({ tipo, observacao })
+    }),
+    registrarTag: (tagData) => request('/ponto/registrar-tag', {
+      method: 'POST',
+      body: JSON.stringify(tagData)
+    })
+  },
+  marcadores: {
+    list: () => request('/marcadores'),
+    create: (data) => request('/marcadores', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }),
+    update: (id, data) => request(`/marcadores/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    }),
+    delete: (id) => request(`/marcadores/${id}`, {
+      method: 'DELETE'
     })
   },
   relatorios: {
