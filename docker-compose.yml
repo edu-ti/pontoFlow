@@ -2,7 +2,6 @@ services:
   # 1. BANCO DE DADOS POSTGRESQL 16
   postgres:
     image: postgres:16-alpine
-    container_name: pontoflow-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER:-pontoflow}
@@ -10,12 +9,12 @@ services:
       POSTGRES_DB: ${DB_NAME:-pontoflow_db}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-pontoflow} -d ${DB_NAME:-pontoflow_db}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-pontoflow} -d ${DB_NAME:-pontoflow_db} || pg_isready || exit 1"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 25s
     networks:
       - pontoflow-net
 
@@ -24,7 +23,6 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: pontoflow-backend
     restart: unless-stopped
     environment:
       PORT: 3001
@@ -50,7 +48,6 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: pontoflow-frontend
     restart: unless-stopped
     depends_on:
       - backend
