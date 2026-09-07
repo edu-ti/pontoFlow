@@ -22,7 +22,8 @@ import {
   Loader2, 
   Coffee, 
   AlertCircle,
-  X
+  X,
+  Fingerprint
 } from 'lucide-react';
 
 export function DashboardPage({ user }) {
@@ -108,8 +109,12 @@ export function DashboardPage({ user }) {
       setTodayData(data);
       setErrorMsg(null);
     } catch (err) {
-      console.error('Erro ao buscar status:', err);
-      setErrorMsg('Erro ao sincronizar dados com o servidor.');
+      console.warn('Tentativa de sincronização com o servidor:', err);
+      // Se não há dados anteriores na tela, informa conexão
+      setTodayData((prev) => {
+        if (!prev) setErrorMsg('Conectando ao servidor...');
+        return prev;
+      });
     } finally {
       setLoading(false);
     }
@@ -419,12 +424,21 @@ export function DashboardPage({ user }) {
                   ) : isReady ? (
                     <button
                       type="button"
-                      className="btn-primary"
-                      style={{ padding: '8px 14px', fontSize: '12px' }}
+                      className="btn-punch-action"
                       onClick={() => handlePunch(item.tipo)}
                       disabled={!!punchLoading}
                     >
-                      {punchLoading === item.tipo ? <Loader2 size={14} className="animate-spin" /> : 'Bater Ponto'}
+                      {punchLoading === item.tipo ? (
+                        <>
+                          <Loader2 size={15} className="animate-spin" />
+                          <span>Gravando...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Fingerprint size={16} />
+                          <span>Bater Ponto</span>
+                        </>
+                      )}
                     </button>
                   ) : (
                     <div style={{ color: 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px' }}>
