@@ -75,15 +75,15 @@ export function MenuDrawerPage({ user, onNavigate, onLogout }) {
             <ChevronRight size={18} className="pf-arrow-right" />
           </div>
 
-          {/* Exportar CSV */}
+          {/* Exportar PDF & CSV */}
           <div className="pf-list-item" onClick={() => onNavigate('relatorios')}>
             <div className="pf-list-left">
               <div className="pf-badge-icon pf-badge-tag">
                 <Download size={20} />
               </div>
               <div className="pf-list-text">
-                <span className="pf-list-title">Exportar para CSV</span>
-                <span className="pf-list-sub">Formato Excel para conferência rápida</span>
+                <span className="pf-list-title">Exportar Relatório (PDF / CSV)</span>
+                <span className="pf-list-sub">Baixar espelho oficial em PDF ou planilha Excel</span>
               </div>
             </div>
             <ChevronRight size={18} className="pf-arrow-right" />

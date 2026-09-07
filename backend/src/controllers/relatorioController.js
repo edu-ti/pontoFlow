@@ -77,7 +77,7 @@ export async function getRelatorios(request, reply) {
               TO_CHAR(saida_almoco, 'HH24:MI:SS') as saida_almoco,
               TO_CHAR(volta_almoco, 'HH24:MI:SS') as volta_almoco,
               TO_CHAR(saida_expediente, 'HH24:MI:SS') as saida_expediente,
-              observacao
+              tag, observacao
        FROM registros_ponto
        WHERE usuario_id = $1 AND data_registro >= $2 AND data_registro <= $3
        ORDER BY data_registro ASC`,
@@ -187,6 +187,7 @@ export async function getRelatorios(request, reply) {
         saldo_minutos: horasCalculadas ? (minTrabalhados - minPrevistoDia) : 0,
         saldo_formatado: horasCalculadas ? minutesToTime(minTrabalhados - minPrevistoDia) : '-',
         status: statusDia,
+        tag: reg ? (reg.tag || null) : null,
         observacao: reg ? (reg.observacao || '') : ''
       });
 
