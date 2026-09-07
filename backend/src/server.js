@@ -30,6 +30,11 @@ await app.register(jwt, {
   secret: process.env.JWT_SECRET || 'pontoflow-super-secret-key-2026-vps-coolify-jwt-token'
 });
 
+// Rota raiz
+app.get('/', async (request, reply) => {
+  return { status: 'ok', app: 'PontoFlow Backend API', timestamp: new Date().toISOString() };
+});
+
 // Rota de Health Check para o Docker / Coolify
 app.get('/health', async (request, reply) => {
   return { status: 'ok', app: 'PontoFlow Backend', timestamp: new Date().toISOString() };
