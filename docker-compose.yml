@@ -38,8 +38,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    ports:
-      - "${BACKEND_PORT:-3001}:3001"
+    expose:
+      - "3001"
     networks:
       - pontoflow-net
 
@@ -51,8 +51,8 @@ services:
     restart: unless-stopped
     depends_on:
       - backend
-    ports:
-      - "${FRONTEND_PORT:-8080}:80"
+    expose:
+      - "80"
     networks:
       - pontoflow-net
 

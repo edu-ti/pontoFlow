@@ -1,0 +1,9 @@
+# Arquivo opcional apenas para desenvolvimento local sem Traefik
+services:
+  backend:
+    ports:
+      - "3001:3001"
+
+  frontend:
+    ports:
+      - "80:80"
