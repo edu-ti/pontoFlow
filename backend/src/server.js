@@ -9,6 +9,7 @@ import relatorioRoutes from './routes/relatorioRoutes.js';
 import marcadoresRoutes from './routes/marcadoresRoutes.js';
 
 dotenv.config();
+process.env.TZ = 'America/Sao_Paulo';
 
 const app = fastify({
   logger: process.env.NODE_ENV === 'development' ? {

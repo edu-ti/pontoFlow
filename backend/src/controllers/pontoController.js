@@ -7,26 +7,29 @@ export async function getTodayStatus(request, reply) {
       return reply.status(401).send({ error: 'Usuário não autenticado.' });
     }
 
-    // 1. Obter data e hora do servidor de forma robusta e compatível com PostgreSQL
+    // 1. Obter data e hora do servidor no fuso horário de Brasília / Pernambuco (America/Sao_Paulo / UTC-3)
     let serverInfo;
     try {
       const serverTimeRes = await pool.query(`
         SELECT 
-          TO_CHAR(CURRENT_TIMESTAMP, 'YYYY-MM-DD') as server_date,
-          TO_CHAR(CURRENT_TIMESTAMP, 'HH24:MI:SS') as server_time,
-          EXTRACT(DOW FROM CURRENT_TIMESTAMP)::INT as day_of_week,
-          TO_CHAR(CURRENT_TIMESTAMP, 'YYYY-MM-DD"T"HH24:MI:SS') as full_timestamp
+          TO_CHAR(CURRENT_TIMESTAMP AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM-DD') as server_date,
+          TO_CHAR(CURRENT_TIMESTAMP AT TIME ZONE 'America/Sao_Paulo', 'HH24:MI:SS') as server_time,
+          EXTRACT(DOW FROM (CURRENT_TIMESTAMP AT TIME ZONE 'America/Sao_Paulo'))::INT as day_of_week,
+          TO_CHAR(CURRENT_TIMESTAMP AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM-DD"T"HH24:MI:SS') as full_timestamp
       `);
       serverInfo = serverTimeRes.rows[0];
     } catch (clockErr) {
       console.warn('[PONTO CONTROLLER] Falha na consulta de horário SQL, usando fallback local:', clockErr.message);
       const now = new Date();
-      const pad = (n) => String(n).padStart(2, '0');
+      const options = { timeZone: 'America/Sao_Paulo', hour12: false };
+      const dParts = new Intl.DateTimeFormat('pt-BR', { ...options, year: 'numeric', month: '2-digit', day: '2-digit' }).format(now).split('/');
+      const server_date = `${dParts[2]}-${dParts[1]}-${dParts[0]}`;
+      const server_time = new Intl.DateTimeFormat('pt-BR', { ...options, hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(now);
       serverInfo = {
-        server_date: `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`,
-        server_time: `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`,
+        server_date,
+        server_time,
         day_of_week: now.getDay(),
-        full_timestamp: now.toISOString()
+        full_timestamp: `${server_date}T${server_time}`
       };
     }
 
@@ -188,11 +191,11 @@ export async function baterPonto(request, reply) {
   try {
     await client.query('BEGIN');
 
-    // Buscar data e hora atual do servidor formatados como string
+    // Buscar data e hora atual do servidor formatados no fuso de Brasília / Pernambuco
     const timeRes = await client.query(`
       SELECT 
-        TO_CHAR(CURRENT_TIMESTAMP, 'YYYY-MM-DD') as data_hoje,
-        TO_CHAR(CURRENT_TIMESTAMP, 'HH24:MI:SS') as hora_agora
+        TO_CHAR(CURRENT_TIMESTAMP AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM-DD') as data_hoje,
+        TO_CHAR(CURRENT_TIMESTAMP AT TIME ZONE 'America/Sao_Paulo', 'HH24:MI:SS') as hora_agora
     `);
     const { data_hoje, hora_agora } = timeRes.rows[0];
 
@@ -313,10 +316,10 @@ export async function registrarTagOuAjuste(request, reply) {
   try {
     await client.query('BEGIN');
 
-    // Usar data fornecida ou data atual do servidor
+    // Usar data fornecida ou data atual do servidor no fuso de Brasília / Pernambuco
     let dateToUse = data_registro;
     if (!dateToUse) {
-      const timeRes = await client.query("SELECT TO_CHAR(CURRENT_TIMESTAMP, 'YYYY-MM-DD') as data_hoje");
+      const timeRes = await client.query("SELECT TO_CHAR(CURRENT_TIMESTAMP AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM-DD') as data_hoje");
       dateToUse = timeRes.rows[0].data_hoje;
     }
 

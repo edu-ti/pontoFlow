@@ -3,6 +3,9 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Configurar fuso horário oficial do Brasil (Brasília / Pernambuco / UTC-3)
+process.env.TZ = 'America/Sao_Paulo';
+
 const { Pool } = pkg;
 
 export const pool = new Pool({
@@ -15,6 +18,13 @@ export const pool = new Pool({
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
+});
+
+// Forçar fuso horário America/Sao_Paulo em cada conexão do pool com o PostgreSQL
+pool.on('connect', (client) => {
+  client.query("SET timezone = 'America/Sao_Paulo';").catch((err) => {
+    console.warn('[DATABASE] Aviso ao configurar timezone na sessão:', err.message);
+  });
 });
 
 pool.on('error', (err) => {

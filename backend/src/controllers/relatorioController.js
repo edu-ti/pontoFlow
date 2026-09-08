@@ -43,11 +43,14 @@ export async function getRelatorios(request, reply) {
     let dtFim;
 
     const hoje = new Date();
-    const targetAno = ano ? parseInt(ano, 10) : hoje.getFullYear();
-    const targetMes = mes ? parseInt(mes, 10) : (hoje.getMonth() + 1);
+    const options = { timeZone: 'America/Sao_Paulo' };
+    const spYear = parseInt(new Intl.DateTimeFormat('pt-BR', { ...options, year: 'numeric' }).format(hoje), 10);
+    const spMonth = parseInt(new Intl.DateTimeFormat('pt-BR', { ...options, month: 'numeric' }).format(hoje), 10);
+    const targetAno = ano ? parseInt(ano, 10) : spYear;
+    const targetMes = mes ? parseInt(mes, 10) : spMonth;
 
     if (tipo === 'diario') {
-      const d = data_inicio || hoje.toISOString().split('T')[0];
+      const d = data_inicio || new Intl.DateTimeFormat('fr-CA', options).format(hoje);
       dtInicio = d;
       dtFim = d;
     } else if (tipo === 'semanal') {
@@ -60,8 +63,8 @@ export async function getRelatorios(request, reply) {
         const firstDay = curr.getDate() - curr.getDay() + (curr.getDay() === 0 ? -6 : 1);
         const mon = new Date(curr.setDate(firstDay));
         const sun = new Date(curr.setDate(firstDay + 6));
-        dtInicio = mon.toISOString().split('T')[0];
-        dtFim = sun.toISOString().split('T')[0];
+        dtInicio = new Intl.DateTimeFormat('fr-CA', options).format(mon);
+        dtFim = new Intl.DateTimeFormat('fr-CA', options).format(sun);
       }
     } else {
       // Mensal (Padrão para conferência com o relógio)
@@ -72,14 +75,15 @@ export async function getRelatorios(request, reply) {
 
     // Buscar registros existentes no banco dentro do período
     const registrosRes = await pool.query(
-      `SELECT id, data_registro,
+      `SELECT id,
+              TO_CHAR(data_registro, 'YYYY-MM-DD') as data_registro,
               TO_CHAR(entrada_expediente, 'HH24:MI:SS') as entrada_expediente,
               TO_CHAR(saida_almoco, 'HH24:MI:SS') as saida_almoco,
               TO_CHAR(volta_almoco, 'HH24:MI:SS') as volta_almoco,
               TO_CHAR(saida_expediente, 'HH24:MI:SS') as saida_expediente,
               tag, observacao
        FROM registros_ponto
-       WHERE usuario_id = $1 AND data_registro >= $2 AND data_registro <= $3
+       WHERE usuario_id = $1 AND data_registro >= $2::DATE AND data_registro <= $3::DATE
        ORDER BY data_registro ASC`,
       [userId, dtInicio, dtFim]
     );
