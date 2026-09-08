@@ -82,7 +82,7 @@ export function ReportsPage({ user, onBack }) {
   ];
 
   // ==========================================
-  // EXPORTAÇÃO EM PDF PROFISSIONAL (ESPELHO)
+  // EXPORTAÇÃO EM PDF PROFISSIONAL (ESPELHO EM 1 ÚNICA PÁGINA A4)
   // ==========================================
   const handleExportPDF = () => {
     if (!reportData?.linhas) return;
@@ -104,55 +104,55 @@ export function ReportsPage({ user, onBack }) {
         hour: '2-digit', minute: '2-digit'
       });
 
-      // Barra superior decorativa
+      // 1. Barra superior decorativa (altura reduzida para economizar espaço)
       doc.setFillColor(37, 99, 235); // Azul Royal #2563eb
-      doc.rect(0, 0, 210, 8, 'F');
+      doc.rect(0, 0, 210, 4, 'F');
 
-      // Título Principal
+      // 2. Título Principal Compacto
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(15);
+      doc.setFontSize(13);
       doc.setTextColor(30, 41, 59);
-      doc.text('ESPELHO DE PONTO ELETRÔNICO', 14, 18);
+      doc.text('ESPELHO DE PONTO ELETRÔNICO', 14, 11);
 
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(9);
+      doc.setFontSize(7.5);
       doc.setTextColor(100, 116, 139);
-      doc.text('Conferência com Relógio de Ponto Físico • Gerado pelo PontoFlow', 14, 23);
+      doc.text('Conferência com Relógio de Ponto Físico • Gerado pelo PontoFlow', 14, 15);
 
-      // Card de Informações da Empresa e Colaborador
+      // 3. Card de Informações da Empresa e Colaborador (Compacto)
       doc.setFillColor(248, 250, 252);
       doc.setDrawColor(226, 232, 240);
-      doc.roundedRect(14, 26, 182, 22, 2, 2, 'FD');
+      doc.roundedRect(14, 18, 182, 16, 2, 2, 'FD');
 
-      doc.setFontSize(8.5);
+      doc.setFontSize(7.5);
       doc.setTextColor(30, 41, 59);
       
       doc.setFont('helvetica', 'bold');
-      doc.text('Empresa:', 18, 33);
+      doc.text('Empresa:', 18, 23.5);
       doc.setFont('helvetica', 'normal');
-      doc.text(empNome, 36, 33);
+      doc.text(empNome, 34, 23.5);
 
       doc.setFont('helvetica', 'bold');
-      doc.text('Colaborador:', 18, 39);
+      doc.text('Colaborador:', 18, 28);
       doc.setFont('helvetica', 'normal');
-      doc.text(colabNome, 41, 39);
+      doc.text(colabNome, 39, 28);
 
       doc.setFont('helvetica', 'bold');
-      doc.text('Período:', 18, 45);
+      doc.text('Período:', 18, 32.5);
       doc.setFont('helvetica', 'normal');
-      doc.text(periodoStr, 34, 45);
+      doc.text(periodoStr, 32, 32.5);
 
       doc.setFont('helvetica', 'bold');
-      doc.text('Emissão:', 124, 33);
+      doc.text('Emissão:', 124, 23.5);
       doc.setFont('helvetica', 'normal');
-      doc.text(dataEmissao, 140, 33);
+      doc.text(dataEmissao, 139, 23.5);
 
       doc.setFont('helvetica', 'bold');
-      doc.text('Login/ID:', 124, 39);
+      doc.text('Login/ID:', 124, 28);
       doc.setFont('helvetica', 'normal');
-      doc.text(reportData.colaborador?.login || '-', 140, 39);
+      doc.text(reportData.colaborador?.login || '-', 139, 28);
 
-      // Resumo de Horas (KPIs)
+      // 4. Resumo de Horas (KPIs Compacto)
       const res = reportData.resumo || {};
       const trab = res.total_horas_trabalhadas || '00:00';
       const prev = res.total_horas_previstas || '00:00';
@@ -160,36 +160,36 @@ export function ReportsPage({ user, onBack }) {
       const diasTrab = res.dias_trabalhados || 0;
 
       doc.setFillColor(241, 245, 249);
-      doc.roundedRect(14, 51, 182, 12, 2, 2, 'F');
+      doc.roundedRect(14, 36, 182, 8, 2, 2, 'F');
 
-      doc.setFontSize(8);
+      doc.setFontSize(7.5);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(71, 85, 105);
 
-      doc.text('Trabalhado: ', 18, 58.5);
+      doc.text('Trabalhado: ', 18, 41.5);
       doc.setTextColor(16, 185, 129);
-      doc.text(`${trab}h`, 38, 58.5);
+      doc.text(`${trab}h`, 37, 41.5);
 
       doc.setTextColor(71, 85, 105);
-      doc.text('Previsto: ', 64, 58.5);
+      doc.text('Previsto: ', 64, 41.5);
       doc.setTextColor(30, 41, 59);
-      doc.text(`${prev}h`, 79, 58.5);
+      doc.text(`${prev}h`, 78, 41.5);
 
       doc.setTextColor(71, 85, 105);
-      doc.text('Saldo Geral: ', 105, 58.5);
+      doc.text('Saldo Geral: ', 105, 41.5);
       if (res.saldo_positivo) {
         doc.setTextColor(16, 185, 129);
       } else {
         doc.setTextColor(239, 68, 68);
       }
-      doc.text(`${saldo}h`, 126, 58.5);
+      doc.text(`${saldo}h`, 125, 41.5);
 
       doc.setTextColor(71, 85, 105);
-      doc.text('Dias Trabalhados: ', 150, 58.5);
+      doc.text('Dias Trabalhados: ', 150, 41.5);
       doc.setTextColor(30, 41, 59);
-      doc.text(`${diasTrab}d`, 177, 58.5);
+      doc.text(`${diasTrab}d`, 176, 41.5);
 
-      // Tabela de Batidas Diárias
+      // 5. Tabela de Batidas Diárias (Otimizada para caber os 31 dias na Página 1)
       const tableHeaders = [
         ['Data', 'Dia', '1. Entrada', '2. Almoço', '3. Retorno', '4. Saída', 'Líquido', 'Saldo', 'Ocorrência']
       ];
@@ -222,37 +222,37 @@ export function ReportsPage({ user, onBack }) {
       autoTable(doc, {
         head: tableHeaders,
         body: tableRows,
-        startY: 66,
+        startY: 46,
         theme: 'grid',
         headStyles: {
           fillColor: [30, 41, 59],
           textColor: [255, 255, 255],
-          fontSize: 7.5,
+          fontSize: 6.5,
           fontStyle: 'bold',
           halign: 'center',
-          cellPadding: 1.8
+          cellPadding: 1.1
         },
         styles: {
-          fontSize: 7,
-          cellPadding: 1.5,
+          fontSize: 6,
+          cellPadding: 0.9,
           halign: 'center',
           textColor: [30, 41, 59],
           lineColor: [226, 232, 240],
-          lineWidth: 0.2
+          lineWidth: 0.15
         },
         alternateRowStyles: {
           fillColor: [248, 250, 252]
         },
         columnStyles: {
-          0: { cellWidth: 15, fontStyle: 'bold' },
-          1: { cellWidth: 11 },
+          0: { cellWidth: 14, fontStyle: 'bold' },
+          1: { cellWidth: 10 },
           2: { cellWidth: 20 },
           3: { cellWidth: 20 },
           4: { cellWidth: 20 },
           5: { cellWidth: 20 },
           6: { cellWidth: 18, fontStyle: 'bold' },
           7: { cellWidth: 18, fontStyle: 'bold' },
-          8: { cellWidth: 40, halign: 'left' }
+          8: { cellWidth: 42, halign: 'left' }
         },
         didParseCell: (data) => {
           if (data.section === 'body') {
@@ -284,47 +284,41 @@ export function ReportsPage({ user, onBack }) {
         }
       });
 
-      // Linhas de Assinaturas (ao final da tabela ou em nova página)
-      let finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 16 : 240;
-      if (finalY > 262) {
-        doc.addPage();
-        finalY = 35;
-      }
+      // 6. Linhas de Assinaturas (Garantidas NA PRIMEIRA PÁGINA)
+      // O Y é calculado após a tabela com limite seguro antes do rodapé
+      const tableFinalY = doc.lastAutoTable ? doc.lastAutoTable.finalY : 200;
+      const finalY = Math.min(Math.max(tableFinalY + 12, 235), 265);
 
       doc.setDrawColor(148, 163, 184);
       doc.setLineWidth(0.4);
 
       // Assinatura Colaborador
       doc.line(20, finalY, 92, finalY);
-      doc.setFontSize(7.5);
+      doc.setFontSize(7);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(71, 85, 105);
       doc.text(colabNome, 56, finalY + 4, { align: 'center' });
-      doc.text('Assinatura do Colaborador', 56, finalY + 8, { align: 'center' });
+      doc.text('Assinatura do Colaborador', 56, finalY + 7.5, { align: 'center' });
 
       // Assinatura Empregador
       doc.line(118, finalY, 190, finalY);
       doc.text(empNome, 154, finalY + 4, { align: 'center' });
-      doc.text('Assinatura do Responsável', 154, finalY + 8, { align: 'center' });
+      doc.text('Assinatura do Responsável', 154, finalY + 7.5, { align: 'center' });
 
-      // Rodapé em todas as páginas
-      const totalPages = doc.internal.getNumberOfPages();
-      for (let i = 1; i <= totalPages; i++) {
-        doc.setPage(i);
-        doc.setFontSize(6.5);
-        doc.setTextColor(148, 163, 184);
-        doc.text(
-          `PontoFlow • Espelho • Documento gerado eletronicamente em ${dataEmissao}`,
-          14,
-          290
-        );
-        doc.text(
-          `Página ${i} de ${totalPages}`,
-          196,
-          290,
-          { align: 'right' }
-        );
-      }
+      // 7. Rodapé na Página 1
+      doc.setFontSize(6.5);
+      doc.setTextColor(148, 163, 184);
+      doc.text(
+        `PontoFlow • Espelho de Ponto • Documento gerado eletronicamente em ${dataEmissao}`,
+        14,
+        289
+      );
+      doc.text(
+        'Página 1 de 1',
+        196,
+        289,
+        { align: 'right' }
+      );
 
       const safeColab = colabNome.replace(/[^a-zA-Z0-9]/g, '_');
       doc.save(`Espelho_${safeColab}_${targetAno}_${String(targetMes).padStart(2, '0')}.pdf`);

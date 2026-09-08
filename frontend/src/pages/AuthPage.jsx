@@ -68,72 +68,193 @@ export function AuthPage({ onAuthSuccess }) {
   };
 
   return (
-    <div className="mobile-wrapper" style={{ justifyContent: 'center', minHeight: '90vh' }}>
-      <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+    <div style={{ 
+      minHeight: '100dvh', 
+      display: 'flex', 
+      flexDirection: 'column', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      padding: '24px 16px',
+      background: 'radial-gradient(circle at 50% 10%, #1e293b 0%, #0f172a 100%)'
+    }}>
+      {/* Logotipo e Apresentação */}
+      <div style={{ textAlign: 'center', marginBottom: '20px' }}>
         <div style={{
-          width: '56px',
-          height: '56px',
-          borderRadius: '16px',
-          background: 'linear-gradient(135deg, var(--primary), #818cf8)',
+          width: '64px',
+          height: '64px',
+          borderRadius: '20px',
+          background: 'linear-gradient(135deg, #2563eb, #0284c7)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           color: '#fff',
           margin: '0 auto 12px',
-          boxShadow: '0 8px 24px var(--primary-glow)'
+          boxShadow: '0 8px 24px rgba(37, 99, 235, 0.4)'
         }}>
-          <Clock size={32} />
+          <Clock size={34} />
         </div>
-        <h1 style={{ fontSize: '24px', fontWeight: 800 }}>PontoFlow</h1>
-        <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+        <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#fff', letterSpacing: '-0.5px' }}>
+          PontoFlow
+        </h1>
+        <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '2px' }}>
           Assistente Ativo de Jornada e Pontualidade
         </p>
       </div>
 
-      <div className="card">
+      {/* Card Moderno de Autenticação */}
+      <div className="auth-card">
+        {/* Toggle Entrar / Auto-Cadastro */}
         <div className="auth-tabs">
           <button 
             type="button"
             className={`auth-tab ${tab === 'login' ? 'active' : ''}`}
             onClick={() => { setTab('login'); setError(null); }}
           >
-            Entrar
+            <LogIn size={16} />
+            <span>Entrar</span>
           </button>
           <button 
             type="button"
             className={`auth-tab ${tab === 'register' ? 'active' : ''}`}
             onClick={() => { setTab('register'); setError(null); }}
           >
-            Auto-Cadastro
+            <UserPlus size={16} />
+            <span>Auto-Cadastro</span>
           </button>
         </div>
 
+        {/* Mensagem de Erro com Destaque */}
         {error && (
           <div style={{
             background: 'rgba(239, 68, 68, 0.15)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            borderRadius: '8px',
-            padding: '10px 12px',
+            border: '1px solid rgba(239, 68, 68, 0.4)',
+            borderRadius: '10px',
+            padding: '12px 14px',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
+            gap: '10px',
             color: '#fca5a5',
             fontSize: '13px'
           }}>
-            <AlertCircle size={16} style={{ flexShrink: 0 }} />
+            <AlertCircle size={18} style={{ flexShrink: 0, color: '#ef4444' }} />
             <span>{error}</span>
           </div>
         )}
 
+        {/* FORMULÁRIO DE LOGIN */}
         {tab === 'login' ? (
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div className="form-group">
-              <label className="form-label">Login do Colaborador</label>
-              <div style={{ position: 'relative' }}>
+              <label className="form-label">
+                <User size={14} />
+                <span>Login do Colaborador</span>
+              </label>
+              <div className="input-with-icon">
+                <div className="input-icon-left">
+                  <User size={18} />
+                </div>
                 <input 
                   type="text" 
                   className="form-input" 
-                  placeholder="Seu usuário ou login" 
+                  placeholder="Digite seu usuário ou login" 
+                  value={loginField}
+                  onChange={(e) => setLoginField(e.target.value)}
+                  autoCapitalize="none"
+                  autoFocus
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">
+                <KeyRound size={14} />
+                <span>Senha de Acesso</span>
+              </label>
+              <div className="input-with-icon">
+                <div className="input-icon-left">
+                  <KeyRound size={18} />
+                </div>
+                <input 
+                  type="password" 
+                  className="form-input" 
+                  placeholder="Digite sua senha" 
+                  value={senhaField}
+                  onChange={(e) => setSenhaField(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            <button 
+              type="submit" 
+              className="btn-primary" 
+              disabled={loading}
+              style={{ width: '100%', height: '48px', marginTop: '6px', fontSize: '14px' }}
+            >
+              {loading ? <Loader2 size={18} className="animate-spin" /> : <LogIn size={18} />}
+              <span>{loading ? 'Acessando...' : 'Entrar no PontoFlow'}</span>
+            </button>
+          </form>
+        ) : (
+          /* FORMULÁRIO DE AUTO-CADASTRO */
+          <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className="form-group">
+              <label className="form-label">
+                <User size={14} />
+                <span>Nome Completo</span>
+              </label>
+              <div className="input-with-icon">
+                <div className="input-icon-left">
+                  <User size={18} />
+                </div>
+                <input 
+                  type="text" 
+                  className="form-input" 
+                  placeholder="Ex: João da Silva" 
+                  value={nomeCompleto}
+                  onChange={(e) => setNomeCompleto(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">
+                <Building2 size={14} />
+                <span>Nome da Empresa</span>
+              </label>
+              <div className="input-with-icon">
+                <div className="input-icon-left">
+                  <Building2 size={18} />
+                </div>
+                <input 
+                  type="text" 
+                  className="form-input" 
+                  placeholder="Ex: FR Produtos Medicos" 
+                  value={nomeEmpresa}
+                  onChange={(e) => setNomeEmpresa(e.target.value)}
+                  required
+                />
+              </div>
+              <span style={{ fontSize: '11px', color: 'var(--text-dim)', paddingLeft: '4px' }}>
+                Se a empresa ainda não existir, será criada automaticamente.
+              </span>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">
+                <UserPlus size={14} />
+                <span>Login Desejado</span>
+              </label>
+              <div className="input-with-icon">
+                <div className="input-icon-left">
+                  <UserPlus size={18} />
+                </div>
+                <input 
+                  type="text" 
+                  className="form-input" 
+                  placeholder="Ex: joao.silva" 
                   value={loginField}
                   onChange={(e) => setLoginField(e.target.value)}
                   autoCapitalize="none"
@@ -143,89 +264,33 @@ export function AuthPage({ onAuthSuccess }) {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Senha</label>
-              <input 
-                type="password" 
-                className="form-input" 
-                placeholder="Sua senha de acesso" 
-                value={senhaField}
-                onChange={(e) => setSenhaField(e.target.value)}
-                required
-              />
+              <label className="form-label">
+                <KeyRound size={14} />
+                <span>Senha</span>
+              </label>
+              <div className="input-with-icon">
+                <div className="input-icon-left">
+                  <KeyRound size={18} />
+                </div>
+                <input 
+                  type="password" 
+                  className="form-input" 
+                  placeholder="Crie uma senha de acesso" 
+                  value={senhaField}
+                  onChange={(e) => setSenhaField(e.target.value)}
+                  required
+                />
+              </div>
             </div>
 
             <button 
               type="submit" 
               className="btn-primary" 
               disabled={loading}
-              style={{ marginTop: '8px' }}
-            >
-              {loading ? <Loader2 size={18} className="animate-spin" /> : <LogIn size={18} />}
-              <span>{loading ? 'Entrando...' : 'Entrar no PontoFlow'}</span>
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div className="form-group">
-              <label className="form-label">Nome Completo</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                placeholder="Ex: João da Silva" 
-                value={nomeCompleto}
-                onChange={(e) => setNomeCompleto(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Nome da Empresa</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                placeholder="Ex: Minha Empresa Ltda" 
-                value={nomeEmpresa}
-                onChange={(e) => setNomeEmpresa(e.target.value)}
-                required
-              />
-              <span style={{ fontSize: '11px', color: 'var(--text-dim)' }}>
-                Se a empresa não existir, será criada automaticamente.
-              </span>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Login Desejado</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                placeholder="Ex: joao.silva" 
-                value={loginField}
-                onChange={(e) => setLoginField(e.target.value)}
-                autoCapitalize="none"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Senha</label>
-              <input 
-                type="password" 
-                className="form-input" 
-                placeholder="Crie uma senha segura" 
-                value={senhaField}
-                onChange={(e) => setSenhaField(e.target.value)}
-                required
-              />
-            </div>
-
-            <button 
-              type="submit" 
-              className="btn-primary" 
-              disabled={loading}
-              style={{ marginTop: '8px' }}
+              style={{ width: '100%', height: '48px', marginTop: '6px', fontSize: '14px' }}
             >
               {loading ? <Loader2 size={18} className="animate-spin" /> : <UserPlus size={18} />}
-              <span>{loading ? 'Cadastrando...' : 'Criar Cadastro e Configurar Turno'}</span>
+              <span>{loading ? 'Criando Conta...' : 'Cadastrar e Configurar Turno'}</span>
             </button>
           </form>
         )}

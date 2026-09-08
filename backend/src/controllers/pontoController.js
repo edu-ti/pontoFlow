@@ -2,15 +2,18 @@ import { pool } from '../config/db.js';
 
 export async function getTodayStatus(request, reply) {
   try {
-    const userId = request.user.id;
+    const userId = request.user?.id;
+    if (!userId) {
+      return reply.status(401).send({ error: 'Usuário não autenticado.' });
+    }
 
-    // Buscar horário atual e dia da semana diretamente do PostgreSQL
+    // Buscar horário atual e dia da semana diretamente do PostgreSQL formatado como string
     const serverTimeRes = await pool.query(`
       SELECT 
-        CURRENT_DATE as server_date,
+        TO_CHAR(CURRENT_DATE, 'YYYY-MM-DD') as server_date,
         TO_CHAR(CURRENT_TIME, 'HH24:MI:SS') as server_time,
         EXTRACT(DOW FROM CURRENT_DATE) as day_of_week,
-        CURRENT_TIMESTAMP as full_timestamp
+        TO_CHAR(CURRENT_TIMESTAMP, 'YYYY-MM-DD"T"HH24:MI:SS') as full_timestamp
     `);
 
     const serverInfo = serverTimeRes.rows[0];
@@ -27,20 +30,38 @@ export async function getTodayStatus(request, reply) {
       return reply.status(404).send({ error: 'Usuário não encontrado.' });
     }
 
-    const jornada = userRes.rows[0];
+    const jornada = userRes.rows[0] || {};
 
-    // Buscar registro de ponto de hoje
-    const pontoRes = await pool.query(
-      `SELECT id, usuario_id, data_registro,
-              TO_CHAR(entrada_expediente, 'HH24:MI:SS') as entrada_expediente,
-              TO_CHAR(saida_almoco, 'HH24:MI:SS') as saida_almoco,
-              TO_CHAR(volta_almoco, 'HH24:MI:SS') as volta_almoco,
-              TO_CHAR(saida_expediente, 'HH24:MI:SS') as saida_expediente,
-              tag, observacao
-       FROM registros_ponto
-       WHERE usuario_id = $1 AND data_registro = $2`,
-      [userId, serverDate]
-    );
+    // Buscar registro de ponto de hoje com fallback para colunas opcionais
+    let pontoRes;
+    try {
+      pontoRes = await pool.query(
+        `SELECT id, usuario_id,
+                TO_CHAR(data_registro, 'YYYY-MM-DD') as data_registro,
+                TO_CHAR(entrada_expediente, 'HH24:MI:SS') as entrada_expediente,
+                TO_CHAR(saida_almoco, 'HH24:MI:SS') as saida_almoco,
+                TO_CHAR(volta_almoco, 'HH24:MI:SS') as volta_almoco,
+                TO_CHAR(saida_expediente, 'HH24:MI:SS') as saida_expediente,
+                tag, observacao
+         FROM registros_ponto
+         WHERE usuario_id = $1 AND data_registro = $2::DATE`,
+        [userId, serverDate]
+      );
+    } catch (queryErr) {
+      console.warn('[PONTO CONTROLLER] Query padrão falhou, usando query compatível:', queryErr.message);
+      pontoRes = await pool.query(
+        `SELECT id, usuario_id,
+                TO_CHAR(data_registro, 'YYYY-MM-DD') as data_registro,
+                TO_CHAR(entrada_expediente, 'HH24:MI:SS') as entrada_expediente,
+                TO_CHAR(saida_almoco, 'HH24:MI:SS') as saida_almoco,
+                TO_CHAR(volta_almoco, 'HH24:MI:SS') as volta_almoco,
+                TO_CHAR(saida_expediente, 'HH24:MI:SS') as saida_expediente,
+                NULL as tag, observacao
+         FROM registros_ponto
+         WHERE usuario_id = $1 AND data_registro = $2::DATE`,
+        [userId, serverDate]
+      );
+    }
 
     const ponto = pontoRes.rows[0] || {
       id: null,
@@ -82,17 +103,23 @@ export async function getTodayStatus(request, reply) {
     // Calcular horário de retorno previsto do almoço se saída de almoço estiver batida
     let horarioRetornoAlmocoPrevisto = null;
     if (ponto.saida_almoco && !ponto.volta_almoco) {
-      const [h, m, s] = ponto.saida_almoco.split(':').map(Number);
-      const totalMin = h * 60 + m + (jornada.tempo_intervalo_minutos || 60);
-      const retH = Math.floor(totalMin / 60) % 24;
-      const retM = totalMin % 60;
-      horarioRetornoAlmocoPrevisto = `${String(retH).padStart(2, '0')}:${String(retM).padStart(2, '0')}:00`;
+      try {
+        const parts = ponto.saida_almoco.split(':').map(Number);
+        const h = parts[0] || 0;
+        const m = parts[1] || 0;
+        const totalMin = h * 60 + m + (jornada.tempo_intervalo_minutos || 60);
+        const retH = Math.floor(totalMin / 60) % 24;
+        const retM = totalMin % 60;
+        horarioRetornoAlmocoPrevisto = `${String(retH).padStart(2, '0')}:${String(retM).padStart(2, '0')}:00`;
+      } catch (calcErr) {
+        console.warn('Erro ao calcular retorno previsto de almoço:', calcErr);
+      }
     }
 
     // Determinar horário de saída previsto do dia
     // DOW: 0 = Dom, 1 = Seg, 2 = Ter, 3 = Qua, 4 = Qui, 5 = Sex, 6 = Sab
     const isSexta = Number(serverInfo.day_of_week) === 5;
-    const horarioSaidaPrevisto = isSexta ? jornada.saida_sexta : jornada.saida_seg_qui;
+    const horarioSaidaPrevisto = isSexta ? (jornada.saida_sexta || '17:00:00') : (jornada.saida_seg_qui || '18:00:00');
 
     return reply.send({
       server: {
@@ -108,10 +135,11 @@ export async function getTodayStatus(request, reply) {
         statusGeral,
         horarioRetornoAlmocoPrevisto,
         horarioSaidaPrevisto,
-        intervaloMinutos: jornada.tempo_intervalo_minutos
+        intervaloMinutos: jornada.tempo_intervalo_minutos || 60
       }
     });
   } catch (err) {
+    console.error('[ERRO CRÍTICO getTodayStatus]:', err);
     request.log.error(err);
     return reply.status(500).send({ error: 'Erro ao buscar status do ponto de hoje.', details: err.message });
   }

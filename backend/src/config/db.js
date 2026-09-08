@@ -35,15 +35,21 @@ export async function testConnection() {
 }
 
 export async function initDbSchema() {
+  let client;
   try {
-    const client = await pool.connect();
+    client = await pool.connect();
+
+    // 1. Empresas
     await client.query(`
       CREATE TABLE IF NOT EXISTS empresas (
           id SERIAL PRIMARY KEY,
           nome_empresa VARCHAR(255) NOT NULL UNIQUE,
           created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
+    `);
 
+    // 2. Usuarios
+    await client.query(`
       CREATE TABLE IF NOT EXISTS usuarios (
           id SERIAL PRIMARY KEY,
           empresa_id INTEGER NOT NULL REFERENCES empresas(id) ON DELETE CASCADE,
@@ -57,7 +63,16 @@ export async function initDbSchema() {
           created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
+    `);
 
+    // Migrações na tabela usuarios
+    await client.query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS entrada_seg_qui TIME NOT NULL DEFAULT '08:00:00';`).catch(() => {});
+    await client.query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS saida_seg_qui TIME NOT NULL DEFAULT '18:00:00';`).catch(() => {});
+    await client.query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS saida_sexta TIME NOT NULL DEFAULT '17:00:00';`).catch(() => {});
+    await client.query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS tempo_intervalo_minutos INTEGER NOT NULL DEFAULT 60;`).catch(() => {});
+
+    // 3. Registros de ponto
+    await client.query(`
       CREATE TABLE IF NOT EXISTS registros_ponto (
           id SERIAL PRIMARY KEY,
           usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
@@ -72,9 +87,14 @@ export async function initDbSchema() {
           updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
           CONSTRAINT unq_usuario_data UNIQUE (usuario_id, data_registro)
       );
+    `);
 
-      ALTER TABLE registros_ponto ADD COLUMN IF NOT EXISTS tag VARCHAR(50);
+    // Migrações na tabela registros_ponto
+    await client.query(`ALTER TABLE registros_ponto ADD COLUMN IF NOT EXISTS tag VARCHAR(50);`).catch((e) => console.warn('[DB MIGRATION] tag:', e.message));
+    await client.query(`ALTER TABLE registros_ponto ADD COLUMN IF NOT EXISTS observacao VARCHAR(500);`).catch((e) => console.warn('[DB MIGRATION] observacao:', e.message));
 
+    // 4. Marcadores
+    await client.query(`
       CREATE TABLE IF NOT EXISTS marcadores (
           id SERIAL PRIMARY KEY,
           usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
@@ -82,15 +102,18 @@ export async function initDbSchema() {
           cor VARCHAR(20) NOT NULL DEFAULT '#3b82f6',
           created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
-
-      CREATE INDEX IF NOT EXISTS idx_usuarios_empresa ON usuarios(empresa_id);
-      CREATE INDEX IF NOT EXISTS idx_registros_usuario_data ON registros_ponto(usuario_id, data_registro);
-      CREATE INDEX IF NOT EXISTS idx_registros_data ON registros_ponto(data_registro);
-      CREATE INDEX IF NOT EXISTS idx_marcadores_usuario ON marcadores(usuario_id);
     `);
-    client.release();
-    console.log('[DATABASE] Esquema de tabelas verificado e pronto.');
+
+    // 5. Índices de performance
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_usuarios_empresa ON usuarios(empresa_id);`).catch(() => {});
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_registros_usuario_data ON registros_ponto(usuario_id, data_registro);`).catch(() => {});
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_registros_data ON registros_ponto(data_registro);`).catch(() => {});
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_marcadores_usuario ON marcadores(usuario_id);`).catch(() => {});
+
+    console.log('[DATABASE] Esquema de tabelas e migrações verificado com sucesso.');
   } catch (err) {
     console.error('[DATABASE] Erro ao inicializar tabelas:', err.message);
+  } finally {
+    if (client) client.release();
   }
 }
