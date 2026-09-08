@@ -1,7 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 
 export function useServerTime(initialServerTime, initialServerDate) {
-  const [currentTime, setCurrentTime] = useState(initialServerTime || '08:00:00');
+  const getInitialTime = () => {
+    if (initialServerTime) return initialServerTime;
+    const now = new Date();
+    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+  };
+
+  const [currentTime, setCurrentTime] = useState(getInitialTime);
   const [currentDate, setCurrentDate] = useState(initialServerDate || '');
   const serverOffsetRef = useRef(0);
 

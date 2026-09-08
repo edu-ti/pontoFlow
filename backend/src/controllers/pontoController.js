@@ -7,63 +7,54 @@ export async function getTodayStatus(request, reply) {
       return reply.status(401).send({ error: 'Usuário não autenticado.' });
     }
 
-    // Buscar horário atual e dia da semana diretamente do PostgreSQL formatado como string
-    const serverTimeRes = await pool.query(`
-      SELECT 
-        TO_CHAR(CURRENT_DATE, 'YYYY-MM-DD') as server_date,
-        TO_CHAR(CURRENT_TIME, 'HH24:MI:SS') as server_time,
-        EXTRACT(DOW FROM CURRENT_DATE) as day_of_week,
-        TO_CHAR(CURRENT_TIMESTAMP, 'YYYY-MM-DD"T"HH24:MI:SS') as full_timestamp
-    `);
+    // 1. Obter data e hora do servidor de forma robusta e compatível com PostgreSQL
+    let serverInfo;
+    try {
+      const serverTimeRes = await pool.query(`
+        SELECT 
+          TO_CHAR(CURRENT_TIMESTAMP, 'YYYY-MM-DD') as server_date,
+          TO_CHAR(CURRENT_TIMESTAMP, 'HH24:MI:SS') as server_time,
+          EXTRACT(DOW FROM CURRENT_TIMESTAMP)::INT as day_of_week,
+          TO_CHAR(CURRENT_TIMESTAMP, 'YYYY-MM-DD"T"HH24:MI:SS') as full_timestamp
+      `);
+      serverInfo = serverTimeRes.rows[0];
+    } catch (clockErr) {
+      console.warn('[PONTO CONTROLLER] Falha na consulta de horário SQL, usando fallback local:', clockErr.message);
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      serverInfo = {
+        server_date: `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`,
+        server_time: `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`,
+        day_of_week: now.getDay(),
+        full_timestamp: now.toISOString()
+      };
+    }
 
-    const serverInfo = serverTimeRes.rows[0];
     const serverDate = serverInfo.server_date;
 
-    // Buscar dados do usuário (jornada)
-    const userRes = await pool.query(
-      `SELECT entrada_seg_qui, saida_seg_qui, saida_sexta, tempo_intervalo_minutos
-       FROM usuarios WHERE id = $1`,
-      [userId]
-    );
+    // 2. Buscar dados da jornada do usuário com valores padrão defensivos
+    let jornada = {
+      entrada_seg_qui: '08:00:00',
+      saida_seg_qui: '18:00:00',
+      saida_sexta: '17:00:00',
+      tempo_intervalo_minutos: 60
+    };
 
-    if (userRes.rows.length === 0) {
-      return reply.status(404).send({ error: 'Usuário não encontrado.' });
-    }
-
-    const jornada = userRes.rows[0] || {};
-
-    // Buscar registro de ponto de hoje com fallback para colunas opcionais
-    let pontoRes;
     try {
-      pontoRes = await pool.query(
-        `SELECT id, usuario_id,
-                TO_CHAR(data_registro, 'YYYY-MM-DD') as data_registro,
-                TO_CHAR(entrada_expediente, 'HH24:MI:SS') as entrada_expediente,
-                TO_CHAR(saida_almoco, 'HH24:MI:SS') as saida_almoco,
-                TO_CHAR(volta_almoco, 'HH24:MI:SS') as volta_almoco,
-                TO_CHAR(saida_expediente, 'HH24:MI:SS') as saida_expediente,
-                tag, observacao
-         FROM registros_ponto
-         WHERE usuario_id = $1 AND data_registro = $2::DATE`,
-        [userId, serverDate]
+      const userRes = await pool.query(
+        `SELECT entrada_seg_qui, saida_seg_qui, saida_sexta, tempo_intervalo_minutos
+         FROM usuarios WHERE id = $1`,
+        [userId]
       );
-    } catch (queryErr) {
-      console.warn('[PONTO CONTROLLER] Query padrão falhou, usando query compatível:', queryErr.message);
-      pontoRes = await pool.query(
-        `SELECT id, usuario_id,
-                TO_CHAR(data_registro, 'YYYY-MM-DD') as data_registro,
-                TO_CHAR(entrada_expediente, 'HH24:MI:SS') as entrada_expediente,
-                TO_CHAR(saida_almoco, 'HH24:MI:SS') as saida_almoco,
-                TO_CHAR(volta_almoco, 'HH24:MI:SS') as volta_almoco,
-                TO_CHAR(saida_expediente, 'HH24:MI:SS') as saida_expediente,
-                NULL as tag, observacao
-         FROM registros_ponto
-         WHERE usuario_id = $1 AND data_registro = $2::DATE`,
-        [userId, serverDate]
-      );
+      if (userRes.rows.length > 0) {
+        jornada = { ...jornada, ...userRes.rows[0] };
+      }
+    } catch (userQueryErr) {
+      console.warn('[PONTO CONTROLLER] Colunas de jornada não encontradas, mantendo padrões:', userQueryErr.message);
     }
 
-    const ponto = pontoRes.rows[0] || {
+    // 3. Buscar registro de ponto de hoje com fallback para compatibilidade de schema
+    let ponto = {
       id: null,
       usuario_id: userId,
       data_registro: serverDate,
@@ -75,13 +66,47 @@ export async function getTodayStatus(request, reply) {
       observacao: null
     };
 
-    // Determinar próximo botão permitido segundo as regras de trava:
-    // 1 -> entrada_expediente
-    // 2 -> saida_almoco (só se 1 batido)
-    // 3 -> volta_almoco (só se 2 batido)
-    // 4 -> saida_expediente (só se 3 batido)
+    try {
+      const pontoRes = await pool.query(
+        `SELECT id, usuario_id,
+                TO_CHAR(data_registro, 'YYYY-MM-DD') as data_registro,
+                TO_CHAR(entrada_expediente, 'HH24:MI:SS') as entrada_expediente,
+                TO_CHAR(saida_almoco, 'HH24:MI:SS') as saida_almoco,
+                TO_CHAR(volta_almoco, 'HH24:MI:SS') as volta_almoco,
+                TO_CHAR(saida_expediente, 'HH24:MI:SS') as saida_expediente,
+                tag, observacao
+         FROM registros_ponto
+         WHERE usuario_id = $1 AND data_registro = $2::DATE`,
+        [userId, serverDate]
+      );
+      if (pontoRes.rows.length > 0) {
+        ponto = { ...ponto, ...pontoRes.rows[0] };
+      }
+    } catch (queryErr) {
+      console.warn('[PONTO CONTROLLER] Query padrão de registros_ponto falhou, tentando básica:', queryErr.message);
+      try {
+        const pontoFallback = await pool.query(
+          `SELECT id, usuario_id,
+                  TO_CHAR(data_registro, 'YYYY-MM-DD') as data_registro,
+                  TO_CHAR(entrada_expediente, 'HH24:MI:SS') as entrada_expediente,
+                  TO_CHAR(saida_almoco, 'HH24:MI:SS') as saida_almoco,
+                  TO_CHAR(volta_almoco, 'HH24:MI:SS') as volta_almoco,
+                  TO_CHAR(saida_expediente, 'HH24:MI:SS') as saida_expediente
+           FROM registros_ponto
+           WHERE usuario_id = $1 AND data_registro = $2::DATE`,
+          [userId, serverDate]
+        );
+        if (pontoFallback.rows.length > 0) {
+          ponto = { ...ponto, ...pontoFallback.rows[0] };
+        }
+      } catch (fbErr) {
+        console.warn('[PONTO CONTROLLER] Query compatível de ponto também falhou:', fbErr.message);
+      }
+    }
+
+    // 4. Regras de trava sequencial (1 -> 2 -> 3 -> 4)
     let proximoPonto = null;
-    let statusGeral = 'NAO_INICIADO'; // NAO_INICIADO | EM_EXPEDIENTE | EM_ALMOCO | RETORNO_ALMOCO | FINALIZADO
+    let statusGeral = 'NAO_INICIADO';
 
     if (!ponto.entrada_expediente) {
       proximoPonto = 'entrada_expediente';
@@ -100,7 +125,7 @@ export async function getTodayStatus(request, reply) {
       statusGeral = 'FINALIZADO';
     }
 
-    // Calcular horário de retorno previsto do almoço se saída de almoço estiver batida
+    // 5. Calcular horário previsto de retorno do almoço
     let horarioRetornoAlmocoPrevisto = null;
     if (ponto.saida_almoco && !ponto.volta_almoco) {
       try {
@@ -116,8 +141,7 @@ export async function getTodayStatus(request, reply) {
       }
     }
 
-    // Determinar horário de saída previsto do dia
-    // DOW: 0 = Dom, 1 = Seg, 2 = Ter, 3 = Qua, 4 = Qui, 5 = Sex, 6 = Sab
+    // 6. Determinar horário de saída previsto do dia
     const isSexta = Number(serverInfo.day_of_week) === 5;
     const horarioSaidaPrevisto = isSexta ? (jornada.saida_sexta || '17:00:00') : (jornada.saida_seg_qui || '18:00:00');
 
@@ -146,7 +170,11 @@ export async function getTodayStatus(request, reply) {
 }
 
 export async function baterPonto(request, reply) {
-  const userId = request.user.id;
+  const userId = request.user?.id;
+  if (!userId) {
+    return reply.status(401).send({ error: 'Usuário não autenticado.' });
+  }
+
   const { tipo, observacao } = request.body || {};
 
   const TIPOS_VALIDOS = ['entrada_expediente', 'saida_almoco', 'volta_almoco', 'saida_expediente'];
@@ -160,19 +188,18 @@ export async function baterPonto(request, reply) {
   try {
     await client.query('BEGIN');
 
-    // Buscar data e hora atual do servidor
+    // Buscar data e hora atual do servidor formatados como string
     const timeRes = await client.query(`
       SELECT 
-        CURRENT_DATE as data_hoje,
-        TO_CHAR(CURRENT_TIME, 'HH24:MI:SS') as hora_agora,
-        CURRENT_TIME as hora_completa
+        TO_CHAR(CURRENT_TIMESTAMP, 'YYYY-MM-DD') as data_hoje,
+        TO_CHAR(CURRENT_TIMESTAMP, 'HH24:MI:SS') as hora_agora
     `);
     const { data_hoje, hora_agora } = timeRes.rows[0];
 
     // Buscar registro de hoje bloqueando a linha para concorrência segura (FOR UPDATE)
     let pontoRes = await client.query(
       `SELECT * FROM registros_ponto 
-       WHERE usuario_id = $1 AND data_registro = $2 
+       WHERE usuario_id = $1 AND data_registro = $2::DATE 
        FOR UPDATE`,
       [userId, data_hoje]
     );
@@ -218,14 +245,15 @@ export async function baterPonto(request, reply) {
     const upsertRes = await client.query(
       `INSERT INTO registros_ponto (
          usuario_id, data_registro, ${tipo}, observacao, updated_at
-       ) VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+       ) VALUES ($1, $2::DATE, $3, $4, CURRENT_TIMESTAMP)
        ON CONFLICT (usuario_id, data_registro)
        DO UPDATE SET 
          ${tipo} = EXCLUDED.${tipo},
          observacao = COALESCE(EXCLUDED.observacao, registros_ponto.observacao),
          updated_at = CURRENT_TIMESTAMP
        RETURNING 
-         id, usuario_id, data_registro,
+         id, usuario_id,
+         TO_CHAR(data_registro, 'YYYY-MM-DD') as data_registro,
          TO_CHAR(entrada_expediente, 'HH24:MI:SS') as entrada_expediente,
          TO_CHAR(saida_almoco, 'HH24:MI:SS') as saida_almoco,
          TO_CHAR(volta_almoco, 'HH24:MI:SS') as volta_almoco,
@@ -262,7 +290,11 @@ export async function baterPonto(request, reply) {
 }
 
 export async function registrarTagOuAjuste(request, reply) {
-  const userId = request.user.id;
+  const userId = request.user?.id;
+  if (!userId) {
+    return reply.status(401).send({ error: 'Usuário não autenticado.' });
+  }
+
   const { 
     data_registro, 
     tag, 
@@ -284,7 +316,7 @@ export async function registrarTagOuAjuste(request, reply) {
     // Usar data fornecida ou data atual do servidor
     let dateToUse = data_registro;
     if (!dateToUse) {
-      const timeRes = await client.query('SELECT CURRENT_DATE as data_hoje');
+      const timeRes = await client.query("SELECT TO_CHAR(CURRENT_TIMESTAMP, 'YYYY-MM-DD') as data_hoje");
       dateToUse = timeRes.rows[0].data_hoje;
     }
 
@@ -293,7 +325,7 @@ export async function registrarTagOuAjuste(request, reply) {
         usuario_id, data_registro, tag, observacao,
         entrada_expediente, saida_almoco, volta_almoco, saida_expediente,
         updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP)
+      ) VALUES ($1, $2::DATE, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP)
       ON CONFLICT (usuario_id, data_registro)
       DO UPDATE SET
         tag = EXCLUDED.tag,
@@ -304,7 +336,8 @@ export async function registrarTagOuAjuste(request, reply) {
         saida_expediente = COALESCE(EXCLUDED.saida_expediente, registros_ponto.saida_expediente),
         updated_at = CURRENT_TIMESTAMP
       RETURNING 
-        id, usuario_id, data_registro,
+        id, usuario_id,
+        TO_CHAR(data_registro, 'YYYY-MM-DD') as data_registro,
         TO_CHAR(entrada_expediente, 'HH24:MI:SS') as entrada_expediente,
         TO_CHAR(saida_almoco, 'HH24:MI:SS') as saida_almoco,
         TO_CHAR(volta_almoco, 'HH24:MI:SS') as volta_almoco,
