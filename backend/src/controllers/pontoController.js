@@ -333,10 +333,10 @@ export async function registrarTagOuAjuste(request, reply) {
       DO UPDATE SET
         tag = EXCLUDED.tag,
         observacao = COALESCE(EXCLUDED.observacao, registros_ponto.observacao),
-        entrada_expediente = COALESCE(EXCLUDED.entrada_expediente, registros_ponto.entrada_expediente),
-        saida_almoco = COALESCE(EXCLUDED.saida_almoco, registros_ponto.saida_almoco),
-        volta_almoco = COALESCE(EXCLUDED.volta_almoco, registros_ponto.volta_almoco),
-        saida_expediente = COALESCE(EXCLUDED.saida_expediente, registros_ponto.saida_expediente),
+        entrada_expediente = CASE WHEN $3 = 'ajuste_manual' THEN EXCLUDED.entrada_expediente ELSE COALESCE(EXCLUDED.entrada_expediente, registros_ponto.entrada_expediente) END,
+        saida_almoco = CASE WHEN $3 = 'ajuste_manual' THEN EXCLUDED.saida_almoco ELSE COALESCE(EXCLUDED.saida_almoco, registros_ponto.saida_almoco) END,
+        volta_almoco = CASE WHEN $3 = 'ajuste_manual' THEN EXCLUDED.volta_almoco ELSE COALESCE(EXCLUDED.volta_almoco, registros_ponto.volta_almoco) END,
+        saida_expediente = CASE WHEN $3 = 'ajuste_manual' THEN EXCLUDED.saida_expediente ELSE COALESCE(EXCLUDED.saida_expediente, registros_ponto.saida_expediente) END,
         updated_at = CURRENT_TIMESTAMP
       RETURNING 
         id, usuario_id,

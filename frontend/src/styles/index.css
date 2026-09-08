@@ -736,26 +736,26 @@ input:checked + .pf-slider:before {
 
 /* Formulários e Inputs */
 .form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 100%;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  width: 100% !important;
 }
 
 .form-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #94a3b8;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #94a3b8 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
 }
 
 .input-with-icon {
-  position: relative;
-  display: flex;
-  align-items: center;
-  width: 100%;
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
 }
 
 .input-icon-left {
@@ -774,14 +774,15 @@ input:checked + .pf-slider:before {
 }
 
 .form-input {
-  width: 100%;
-  background-color: #171f33 !important;
+  display: block !important;
+  width: 100% !important;
+  background-color: #0f172a !important;
   color: #ffffff !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
   border-radius: 10px !important;
   padding: 12px 14px !important;
   font-size: 14px !important;
-  font-family: var(--font-sans) !important;
+  font-family: inherit !important;
   outline: none !important;
   box-sizing: border-box !important;
   transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
@@ -793,7 +794,7 @@ input:checked + .pf-slider:before {
 
 .form-input:focus {
   border-color: #3b82f6 !important;
-  background-color: #1c263f !important;
+  background-color: #171f33 !important;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25) !important;
 }
 
@@ -810,6 +811,8 @@ input:checked + .pf-slider:before {
 }
 
 input[type="time"].form-input,
-input[type="date"].form-input {
-  color-scheme: dark;
+input[type="date"].form-input,
+input[type="time"],
+input[type="date"] {
+  color-scheme: dark !important;
 }

@@ -23,7 +23,10 @@ import {
   Coffee, 
   AlertCircle,
   X,
-  Fingerprint
+  Fingerprint,
+  Calendar,
+  Pencil,
+  FileText
 } from 'lucide-react';
 
 export function DashboardPage({ user }) {
@@ -34,6 +37,14 @@ export function DashboardPage({ user }) {
   const [errorMsg, setErrorMsg] = useState(null);
 
   // Navegação de dias no cabeçalho
+  const getLocalDateString = (d) => {
+    const dateObj = d instanceof Date ? d : new Date();
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   // Bottom Sheet "O que deseja adicionar?" (Captura 5)
@@ -43,28 +54,31 @@ export function DashboardPage({ user }) {
   const [tagModalOpen, setTagModalOpen] = useState(false);
   const [tagModalTitle, setTagModalTitle] = useState('');
   const [selectedTagType, setSelectedTagType] = useState('');
-  const [tagDataRegistro, setTagDataRegistro] = useState(new Date().toISOString().split('T')[0]);
+  const [tagDataRegistro, setTagDataRegistro] = useState(() => getLocalDateString(new Date()));
   const [tagObservacao, setTagObservacao] = useState('');
   const [tagSaving, setTagSaving] = useState(false);
 
   // Estados para Ajuste Manual de Horários
-  const [manualEntrada, setManualEntrada] = useState('08:00');
-  const [manualSaidaAlmoco, setManualSaidaAlmoco] = useState('12:00');
-  const [manualVoltaAlmoco, setManualVoltaAlmoco] = useState('13:00');
-  const [manualSaidaExpediente, setManualSaidaExpediente] = useState('18:00');
+  const [manualEntrada, setManualEntrada] = useState('');
+  const [manualSaidaAlmoco, setManualSaidaAlmoco] = useState('');
+  const [manualVoltaAlmoco, setManualVoltaAlmoco] = useState('');
+  const [manualSaidaExpediente, setManualSaidaExpediente] = useState('');
 
   const handleOpenTagModal = (type, title) => {
     setIsSheetOpen(false);
     setSelectedTagType(type);
     setTagModalTitle(title);
-    setTagDataRegistro(selectedDate.toISOString().split('T')[0]);
+    setTagDataRegistro(getLocalDateString(selectedDate));
     setTagObservacao('');
 
     if (type === 'ajuste_manual') {
-      setManualEntrada(todayData?.ponto?.entrada_expediente?.slice(0, 5) || '08:00');
-      setManualSaidaAlmoco(todayData?.ponto?.saida_almoco?.slice(0, 5) || '12:00');
-      setManualVoltaAlmoco(todayData?.ponto?.volta_almoco?.slice(0, 5) || '13:00');
-      setManualSaidaExpediente(todayData?.ponto?.saida_expediente?.slice(0, 5) || '18:00');
+      setManualEntrada(todayData?.ponto?.entrada_expediente?.slice(0, 5) || '');
+      setManualSaidaAlmoco(todayData?.ponto?.saida_almoco?.slice(0, 5) || '');
+      setManualVoltaAlmoco(todayData?.ponto?.volta_almoco?.slice(0, 5) || '');
+      setManualSaidaExpediente(todayData?.ponto?.saida_expediente?.slice(0, 5) || '');
+      if (todayData?.ponto?.observacao) {
+        setTagObservacao(todayData.ponto.observacao);
+      }
     }
 
     setTagModalOpen(true);
@@ -410,17 +424,32 @@ export function DashboardPage({ user }) {
 
                 <div>
                   {isCompleted ? (
-                    <div style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '15px',
-                      fontWeight: 700,
-                      color: 'var(--emerald)',
-                      background: 'rgba(16, 185, 129, 0.15)',
-                      padding: '4px 10px',
-                      borderRadius: '6px'
-                    }}>
-                      {item.val}
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenTagModal('ajuste_manual', 'Ajustar Horários de Ponto')}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        background: 'rgba(16, 185, 129, 0.12)',
+                        border: '1px solid rgba(16, 185, 129, 0.35)',
+                        padding: '5px 10px',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                      title="Clique para ajustar ou corrigir este horário"
+                    >
+                      <span style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '14px',
+                        fontWeight: 700,
+                        color: 'var(--emerald)'
+                      }}>
+                        {item.val}
+                      </span>
+                      <Pencil size={13} style={{ color: '#34d399' }} />
+                    </button>
                   ) : isReady ? (
                     <button
                       type="button"
@@ -451,6 +480,33 @@ export function DashboardPage({ user }) {
             );
           })}
         </div>
+
+        {/* Atalho de Ajuste de Horário */}
+        {todayData?.ponto?.entrada_expediente && (
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '12px' }}>
+            <button
+              type="button"
+              onClick={() => handleOpenTagModal('ajuste_manual', 'Ajustar Horários de Ponto')}
+              style={{
+                background: 'rgba(59, 130, 246, 0.08)',
+                border: '1px solid rgba(59, 130, 246, 0.25)',
+                color: '#60a5fa',
+                fontSize: '12px',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                cursor: 'pointer',
+                padding: '8px 14px',
+                borderRadius: '10px',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <Pencil size={14} />
+              <span>Bateu no horário errado? Clique aqui para ajustar</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ------------------------------------------------------------- */}
@@ -507,10 +563,13 @@ export function DashboardPage({ user }) {
               <span className="pf-sheet-item-label">Férias</span>
             </div>
 
-            {/* 7. Ajuste manual */}
-            <div className="pf-sheet-item" onClick={() => handleOpenTagModal('ajuste_manual', 'Ajuste manual de ponto')}>
-              <Sparkles size={20} style={{ color: '#c084fc' }} />
-              <span className="pf-sheet-item-label">Ajuste manual</span>
+            {/* 7. Ajustar horários de ponto */}
+            <div className="pf-sheet-item" onClick={() => handleOpenTagModal('ajuste_manual', 'Ajustar Horários de Ponto')}>
+              <Pencil size={20} style={{ color: '#38bdf8' }} />
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span className="pf-sheet-item-label" style={{ fontWeight: 600 }}>Ajustar horários de ponto</span>
+                <span style={{ fontSize: '11px', color: '#94a3b8' }}>Corrigir batidas registradas no horário errado</span>
+              </div>
             </div>
 
             {/* 8. Carga horária diferente */}
@@ -536,84 +595,227 @@ export function DashboardPage({ user }) {
       {/* ------------------------------------------------------------- */}
       {/* MODAL DE CADASTRO DE TAG (Feriado, Folga, Falta, Ajuste)      */}
       {/* ------------------------------------------------------------- */}
+      {/* ------------------------------------------------------------- */}
+      {/* MODAL DE CADASTRO DE TAG E AJUSTE DE PONTO                    */}
+      {/* ------------------------------------------------------------- */}
       {tagModalOpen && (
         <div className="pf-sheet-backdrop" onClick={() => setTagModalOpen(false)}>
-          <div className="pf-sheet-modal" onClick={(e) => e.stopPropagation()} style={{ maxHeight: '90vh' }}>
-            <div className="pf-sheet-handle"></div>
+          <div 
+            className="pf-sheet-modal" 
+            onClick={(e) => e.stopPropagation()} 
+            style={{ 
+              maxHeight: '92vh',
+              maxWidth: '480px',
+              margin: '0 auto',
+              width: '100%',
+              background: '#141b2d',
+              borderTop: '1px solid rgba(255, 255, 255, 0.12)',
+              borderRadius: '24px 24px 0 0',
+              padding: '20px 20px calc(28px + var(--safe-bottom))',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px'
+            }}
+          >
+            <div className="pf-sheet-handle" style={{ width: '44px', height: '5px', borderRadius: '3px', background: 'rgba(255,255,255,0.2)', margin: '0 auto 4px' }}></div>
+            
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h2 className="pf-sheet-title">{tagModalTitle}</h2>
-              <button type="button" className="pf-icon-btn" onClick={() => setTagModalOpen(false)}>
-                <X size={20} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {selectedTagType === 'ajuste_manual' ? (
+                  <Pencil size={20} style={{ color: '#38bdf8' }} />
+                ) : selectedTagType === 'feriado' ? (
+                  <Sun size={20} style={{ color: '#34d399' }} />
+                ) : selectedTagType === 'folga' ? (
+                  <Bed size={20} style={{ color: '#facc15' }} />
+                ) : (
+                  <Sparkles size={20} style={{ color: '#c084fc' }} />
+                )}
+                <h2 className="pf-sheet-title" style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: '#ffffff' }}>
+                  {tagModalTitle}
+                </h2>
+              </div>
+              <button 
+                type="button" 
+                className="pf-icon-btn" 
+                onClick={() => setTagModalOpen(false)}
+                style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(255,255,255,0.06)' }}
+              >
+                <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleSaveTag} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div className="form-group">
-                <label className="form-label">Data do Registro</label>
+            <form onSubmit={handleSaveTag} style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
+              {/* Campo de Data */}
+              <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }}>
+                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, color: '#94a3b8' }}>
+                  <Calendar size={15} style={{ color: '#3b82f6' }} />
+                  <span>Data do Registro</span>
+                </label>
                 <input 
                   type="date" 
                   className="form-input" 
                   value={tagDataRegistro} 
                   onChange={(e) => setTagDataRegistro(e.target.value)}
                   required 
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    background: '#0d1322',
+                    color: '#ffffff',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    borderRadius: '10px',
+                    padding: '12px 14px',
+                    fontSize: '14px',
+                    colorScheme: 'dark',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
                 />
               </div>
 
               {selectedTagType === 'ajuste_manual' ? (
-                <>
+                <div style={{
+                  padding: '16px',
+                  background: 'rgba(13, 19, 34, 0.75)',
+                  borderRadius: '14px',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px'
+                }}>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Clock size={16} style={{ color: 'var(--primary)' }} />
+                    <span>Corrigir Horários das Batidas</span>
+                  </div>
+                  <span style={{ fontSize: '11px', color: '#94a3b8', lineHeight: 1.4 }}>
+                    Informe os horários corretos ou deixe em branco caso queira remover a batida:
+                  </span>
+
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                    <div className="form-group">
-                      <label className="form-label">1. Entrada</label>
+                    {/* 1. Entrada */}
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label className="form-label" style={{ fontSize: '12px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ color: '#3b82f6', fontWeight: 700 }}>1.</span> Entrada
+                      </label>
                       <input 
                         type="time" 
                         className="form-input" 
                         value={manualEntrada} 
                         onChange={(e) => setManualEntrada(e.target.value)} 
+                        style={{
+                          width: '100%',
+                          background: '#171f33',
+                          color: '#ffffff',
+                          border: '1px solid rgba(255,255,255,0.12)',
+                          borderRadius: '8px',
+                          padding: '10px',
+                          fontSize: '14px',
+                          colorScheme: 'dark',
+                          boxSizing: 'border-box'
+                        }}
                       />
                     </div>
-                    <div className="form-group">
-                      <label className="form-label">2. Saída Almoço</label>
+
+                    {/* 2. Saída Almoço */}
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label className="form-label" style={{ fontSize: '12px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ color: '#f59e0b', fontWeight: 700 }}>2.</span> Saída Almoço
+                      </label>
                       <input 
                         type="time" 
                         className="form-input" 
                         value={manualSaidaAlmoco} 
                         onChange={(e) => setManualSaidaAlmoco(e.target.value)} 
+                        style={{
+                          width: '100%',
+                          background: '#171f33',
+                          color: '#ffffff',
+                          border: '1px solid rgba(255,255,255,0.12)',
+                          borderRadius: '8px',
+                          padding: '10px',
+                          fontSize: '14px',
+                          colorScheme: 'dark',
+                          boxSizing: 'border-box'
+                        }}
                       />
                     </div>
-                    <div className="form-group">
-                      <label className="form-label">3. Volta Almoço</label>
+
+                    {/* 3. Volta Almoço */}
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label className="form-label" style={{ fontSize: '12px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ color: '#10b981', fontWeight: 700 }}>3.</span> Volta Almoço
+                      </label>
                       <input 
                         type="time" 
                         className="form-input" 
                         value={manualVoltaAlmoco} 
                         onChange={(e) => setManualVoltaAlmoco(e.target.value)} 
+                        style={{
+                          width: '100%',
+                          background: '#171f33',
+                          color: '#ffffff',
+                          border: '1px solid rgba(255,255,255,0.12)',
+                          borderRadius: '8px',
+                          padding: '10px',
+                          fontSize: '14px',
+                          colorScheme: 'dark',
+                          boxSizing: 'border-box'
+                        }}
                       />
                     </div>
-                    <div className="form-group">
-                      <label className="form-label">4. Fim Expediente</label>
+
+                    {/* 4. Fim Expediente */}
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label className="form-label" style={{ fontSize: '12px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ color: '#8b5cf6', fontWeight: 700 }}>4.</span> Fim Expediente
+                      </label>
                       <input 
                         type="time" 
                         className="form-input" 
                         value={manualSaidaExpediente} 
                         onChange={(e) => setManualSaidaExpediente(e.target.value)} 
+                        style={{
+                          width: '100%',
+                          background: '#171f33',
+                          color: '#ffffff',
+                          border: '1px solid rgba(255,255,255,0.12)',
+                          borderRadius: '8px',
+                          padding: '10px',
+                          fontSize: '14px',
+                          colorScheme: 'dark',
+                          boxSizing: 'border-box'
+                        }}
                       />
                     </div>
                   </div>
 
-                  <div className="form-group">
-                    <label className="form-label">Motivo do Ajuste</label>
+                  <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
+                    <label className="form-label" style={{ fontSize: '12px', color: '#94a3b8' }}>Motivo da Correção</label>
                     <input 
                       type="text" 
                       className="form-input" 
-                      placeholder="Ex: Esqueci de bater no relógio físico"
+                      placeholder="Ex: Correção de batida registrada no horário errado"
                       value={tagObservacao}
                       onChange={(e) => setTagObservacao(e.target.value)}
+                      style={{
+                        width: '100%',
+                        background: '#171f33',
+                        color: '#ffffff',
+                        border: '1px solid rgba(255,255,255,0.12)',
+                        borderRadius: '8px',
+                        padding: '10px',
+                        fontSize: '13px',
+                        boxSizing: 'border-box'
+                      }}
                     />
                   </div>
-                </>
+                </div>
               ) : (
-                <div className="form-group">
-                  <label className="form-label">Descrição / Observação</label>
+                <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }}>
+                  <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, color: '#94a3b8' }}>
+                    <FileText size={15} style={{ color: '#38bdf8' }} />
+                    <span>Descrição / Observação</span>
+                  </label>
                   <input 
                     type="text" 
                     className="form-input" 
@@ -627,15 +829,27 @@ export function DashboardPage({ user }) {
                     value={tagObservacao}
                     onChange={(e) => setTagObservacao(e.target.value)}
                     autoFocus
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      background: '#0d1322',
+                      color: '#ffffff',
+                      border: '1px solid rgba(255,255,255,0.15)',
+                      borderRadius: '10px',
+                      padding: '12px 14px',
+                      fontSize: '14px',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
                   />
                 </div>
               )}
 
-              <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+              <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
                 <button 
                   type="button" 
                   className="btn-secondary" 
-                  style={{ flex: 1 }} 
+                  style={{ flex: 1, height: '44px' }} 
                   onClick={() => setTagModalOpen(false)}
                 >
                   Cancelar
@@ -643,7 +857,7 @@ export function DashboardPage({ user }) {
                 <button 
                   type="submit" 
                   className="btn-primary" 
-                  style={{ flex: 2 }}
+                  style={{ flex: 2, height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                   disabled={tagSaving}
                 >
                   {tagSaving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
