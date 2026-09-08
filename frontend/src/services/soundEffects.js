@@ -4,6 +4,44 @@ let audioCtx = null;
 let alarmIntervalId = null;
 let isAlarmPlaying = false;
 
+// Verifica se o som está ativado pelo usuário (persistido no localStorage)
+export function isSoundEnabled() {
+  if (typeof window === 'undefined') return true;
+  const val = localStorage.getItem('pontoflow_sound_enabled');
+  if (val === 'false') return false;
+  if (val === 'true') return true;
+  if ('Notification' in window && Notification.permission === 'granted') return true;
+  return false;
+}
+
+// Salva preferência de som
+export function setSoundEnabled(enabled) {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('pontoflow_sound_enabled', enabled ? 'true' : 'false');
+    if (!enabled) {
+      stopEmergencyAlarm();
+    }
+  }
+}
+
+// Desbloqueio silencioso do AudioContext no primeiro toque/clique do usuário
+if (typeof window !== 'undefined') {
+  const silentUnlock = () => {
+    try {
+      if (isSoundEnabled()) {
+        const ctx = initAudioContext();
+        if (ctx && ctx.state === 'suspended') {
+          ctx.resume().catch(() => {});
+        }
+      }
+    } catch (e) {}
+  };
+
+  ['click', 'touchstart', 'touchend', 'pointerdown', 'keydown'].forEach((evt) => {
+    window.addEventListener(evt, silentUnlock, { capture: true, passive: true });
+  });
+}
+
 // Inicializa e desbloqueia o AudioContext em dispositivos móveis (iOS/Android)
 export function initAudioContext() {
   try {
@@ -14,7 +52,7 @@ export function initAudioContext() {
       }
     }
     if (audioCtx && audioCtx.state === 'suspended') {
-      audioCtx.resume();
+      audioCtx.resume().catch(() => {});
     }
     return audioCtx;
   } catch (err) {
@@ -25,6 +63,7 @@ export function initAudioContext() {
 
 // Bip básico sintetizado
 export function playTone(freq = 800, duration = 0.15, type = 'sine', gainVal = 0.25) {
+  if (!isSoundEnabled()) return;
   try {
     const ctx = initAudioContext();
     if (!ctx) return;

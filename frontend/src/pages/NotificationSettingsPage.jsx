@@ -3,7 +3,8 @@ import { ArrowLeft, Bell, Volume2, Check } from 'lucide-react';
 import { 
   initAudioContext, 
   requestNotificationPermission, 
-  playSuccessChime 
+  playSuccessChime,
+  setSoundEnabled
 } from '../services/soundEffects';
 
 export function NotificationSettingsPage({ user, onBack }) {
@@ -47,8 +48,9 @@ export function NotificationSettingsPage({ user, onBack }) {
     currentPrefs[key] = newVal;
     localStorage.setItem('pontoflow_notif_prefs', JSON.stringify(currentPrefs));
 
-    // Se estiver ativando, garante permissão de áudio e push
+    // Se estiver ativando, garante permissão de áudio, push e salva som como ativado
     if (newVal) {
+      setSoundEnabled(true);
       initAudioContext();
       requestNotificationPermission();
     }
