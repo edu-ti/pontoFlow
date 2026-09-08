@@ -30,6 +30,7 @@ export function ReportsPage({ user, onBack }) {
   const [periodoTipo, setPeriodoTipo] = useState('mensal'); // 'diario' | 'semanal' | 'mensal'
   const [targetAno, setTargetAno] = useState(hoje.getFullYear());
   const [targetMes, setTargetMes] = useState(hoje.getMonth() + 1);
+  const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [generatingPdf, setGeneratingPdf] = useState(false);
@@ -448,18 +449,126 @@ export function ReportsPage({ user, onBack }) {
           <button className="pf-icon-btn no-print" onClick={handlePrevMonth}>
             <ChevronLeft size={20} />
           </button>
-          <div style={{ textAlign: 'center' }}>
-            <span style={{ fontSize: '16px', fontWeight: 700, color: '#fff', display: 'block' }}>
-              {MESES[targetMes - 1]} de {targetAno}
-            </span>
-            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-              {reportData?.colaborador?.nome_completo || user?.nome_completo}
-            </span>
-          </div>
+          <button 
+            type="button" 
+            className="day-nav-date-btn no-print" 
+            onClick={() => setIsMonthPickerOpen(!isMonthPickerOpen)}
+            style={{ textAlign: 'center', cursor: 'pointer' }}
+            title="Clique para escolher mês e ano"
+          >
+            <div>
+              <span style={{ fontSize: '16px', fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                <Calendar size={16} style={{ color: '#38bdf8' }} />
+                <span>{MESES[targetMes - 1]} de {targetAno}</span>
+              </span>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginTop: '2px' }}>
+                {reportData?.colaborador?.nome_completo || user?.nome_completo}
+              </span>
+            </div>
+          </button>
           <button className="pf-icon-btn no-print" onClick={handleNextMonth}>
             <ChevronRight size={20} />
           </button>
         </div>
+
+        {/* Modal de Escolha Rápida de Mês e Ano */}
+        {isMonthPickerOpen && (
+          <div 
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0, 0, 0, 0.75)',
+              backdropFilter: 'blur(8px)',
+              zIndex: 3000,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '16px'
+            }}
+            onClick={() => setIsMonthPickerOpen(false)}
+          >
+            <div 
+              style={{
+                width: '100%',
+                maxWidth: '340px',
+                background: '#0f172a',
+                border: '1px solid rgba(255, 255, 255, 0.16)',
+                borderRadius: '16px',
+                padding: '18px',
+                boxShadow: '0 20px 45px rgba(0, 0, 0, 0.85)'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Navegação do Ano */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                <button 
+                  type="button" 
+                  className="cal-nav-btn" 
+                  onClick={() => setTargetAno((prev) => prev - 1)}
+                  title="Ano anterior"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <strong style={{ fontSize: '16px', color: '#fff', fontWeight: 800 }}>{targetAno}</strong>
+                <button 
+                  type="button" 
+                  className="cal-nav-btn" 
+                  onClick={() => setTargetAno((prev) => prev + 1)}
+                  title="Próximo ano"
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+
+              {/* Grade de 12 Meses */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                {MESES.map((mNome, idx) => {
+                  const mNum = idx + 1;
+                  const isSelected = mNum === targetMes;
+                  const isCurrent = (new Date().getMonth() + 1 === mNum) && (new Date().getFullYear() === targetAno);
+
+                  return (
+                    <button
+                      key={mNome}
+                      type="button"
+                      onClick={() => {
+                        setTargetMes(mNum);
+                        setIsMonthPickerOpen(false);
+                      }}
+                      style={{
+                        padding: '12px 6px',
+                        borderRadius: '10px',
+                        border: isSelected ? 'none' : isCurrent ? '1px solid rgba(16, 185, 129, 0.5)' : '1px solid rgba(255, 255, 255, 0.08)',
+                        background: isSelected 
+                          ? 'linear-gradient(135deg, #3b82f6, #1d4ed8)' 
+                          : 'rgba(255, 255, 255, 0.04)',
+                        color: isSelected ? '#ffffff' : isCurrent ? '#34d399' : '#e2e8f0',
+                        fontWeight: isSelected || isCurrent ? 700 : 500,
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                        boxShadow: isSelected ? '0 4px 12px rgba(59, 130, 246, 0.4)' : 'none'
+                      }}
+                    >
+                      {mNome.slice(0, 3)}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Botão Fechar */}
+              <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>
+                <button 
+                  type="button" 
+                  className="cal-close-btn" 
+                  onClick={() => setIsMonthPickerOpen(false)}
+                >
+                  Fechar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Barra de Ações Rápidas de Exportação (Mobile-friendly) */}
         <div className="no-print" style={{

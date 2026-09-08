@@ -4,6 +4,7 @@ import { useServerTime } from '../hooks/useServerTime';
 import { useAlarmSystem } from '../hooks/useAlarmSystem';
 import { AlarmOverlay } from '../components/AlarmOverlay';
 import { PermissionBanner } from '../components/PermissionBanner';
+import { CustomDatePicker } from '../components/CustomDatePicker';
 import { playSuccessChime } from '../services/soundEffects';
 import { 
   ChevronLeft, 
@@ -46,6 +47,7 @@ export function DashboardPage({ user }) {
   };
 
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [isNavDatePickerOpen, setIsNavDatePickerOpen] = useState(false);
 
   // Bottom Sheet "O que deseja adicionar?" (Captura 5)
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -273,14 +275,56 @@ export function DashboardPage({ user }) {
       <div className="mobile-wrapper">
         {/* Barra de Navegação da Data: < seg., 07 set. 2026 > */}
         <div className="day-nav-bar">
-          <button type="button" className="pf-icon-btn" onClick={handlePrevDay}>
+          <button type="button" className="pf-icon-btn" onClick={handlePrevDay} title="Dia anterior">
             <ChevronLeft size={22} />
           </button>
-          <span className="day-nav-title">{formatNavDate(selectedDate)}</span>
-          <button type="button" className="pf-icon-btn" onClick={handleNextDay}>
+          <button 
+            type="button" 
+            className="day-nav-date-btn"
+            onClick={() => setIsNavDatePickerOpen(true)}
+            title="Clique para abrir o calendário e escolher qualquer data"
+          >
+            <Calendar size={16} style={{ color: '#38bdf8' }} />
+            <span className="day-nav-title" style={{ margin: 0 }}>{formatNavDate(selectedDate)}</span>
+          </button>
+          <button type="button" className="pf-icon-btn" onClick={handleNextDay} title="Próximo dia">
             <ChevronRight size={22} />
           </button>
         </div>
+
+        {/* Modal de Calendário Rápido da Barra de Navegação */}
+        {isNavDatePickerOpen && (
+          <div 
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0, 0, 0, 0.75)',
+              backdropFilter: 'blur(8px)',
+              zIndex: 3000,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '16px'
+            }}
+            onClick={() => setIsNavDatePickerOpen(false)}
+          >
+            <div 
+              style={{ width: '100%', maxWidth: '360px' }} 
+              onClick={(e) => e.stopPropagation()}
+            >
+              <CustomDatePicker
+                inline={true}
+                value={getLocalDateString(selectedDate)}
+                onChange={(newYmd) => {
+                  const [y, m, d] = newYmd.split('-').map(Number);
+                  setSelectedDate(new Date(y, m - 1, d, 12, 0, 0));
+                  setIsNavDatePickerOpen(false);
+                }}
+                onClose={() => setIsNavDatePickerOpen(false)}
+              />
+            </div>
+          </div>
+        )}
 
         {/* 3 Contadores: Trab. no dia | Saldo do dia | Banco de horas */}
         <div className="day-metrics-grid">
@@ -645,31 +689,16 @@ export function DashboardPage({ user }) {
             </div>
 
             <form onSubmit={handleSaveTag} style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
-              {/* Campo de Data */}
+              {/* Campo de Data com Calendário Dark Moderno */}
               <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }}>
                 <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, color: '#94a3b8' }}>
-                  <Calendar size={15} style={{ color: '#3b82f6' }} />
+                  <Calendar size={15} style={{ color: '#38bdf8' }} />
                   <span>Data do Registro</span>
                 </label>
-                <input 
-                  type="date" 
-                  className="form-input" 
-                  value={tagDataRegistro} 
-                  onChange={(e) => setTagDataRegistro(e.target.value)}
-                  required 
-                  style={{
-                    display: 'block',
-                    width: '100%',
-                    background: '#0d1322',
-                    color: '#ffffff',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    borderRadius: '10px',
-                    padding: '12px 14px',
-                    fontSize: '14px',
-                    colorScheme: 'dark',
-                    outline: 'none',
-                    boxSizing: 'border-box'
-                  }}
+                <CustomDatePicker 
+                  value={tagDataRegistro}
+                  onChange={(newDate) => setTagDataRegistro(newDate)}
+                  placeholder="Selecione a data da ocorrência"
                 />
               </div>
 
