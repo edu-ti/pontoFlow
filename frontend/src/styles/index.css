@@ -779,7 +779,7 @@ input:checked + .pf-slider:before {
   color: #ffffff !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
   border-radius: 10px !important;
-  padding: 12px 14px 12px 42px !important;
+  padding: 12px 14px !important;
   font-size: 14px !important;
   font-family: var(--font-sans) !important;
   outline: none !important;
@@ -787,8 +787,8 @@ input:checked + .pf-slider:before {
   transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
 }
 
-.form-input.no-icon {
-  padding-left: 14px !important;
+.input-with-icon .form-input {
+  padding-left: 42px !important;
 }
 
 .form-input:focus {
@@ -797,6 +797,19 @@ input:checked + .pf-slider:before {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25) !important;
 }
 
+.form-input:disabled,
+.form-input[disabled] {
+  opacity: 0.65 !important;
+  cursor: not-allowed !important;
+  background-color: #0d1322 !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
 .form-input::placeholder {
   color: #64748b !important;
+}
+
+input[type="time"].form-input,
+input[type="date"].form-input {
+  color-scheme: dark;
 }
