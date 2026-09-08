@@ -82,7 +82,7 @@ export function ReportsPage({ user, onBack }) {
   ];
 
   // ==========================================
-  // EXPORTAÇÃO EM PDF PROFISSIONAL (ESPELHO KNUP)
+  // EXPORTAÇÃO EM PDF PROFISSIONAL (ESPELHO)
   // ==========================================
   const handleExportPDF = () => {
     if (!reportData?.linhas) return;
@@ -117,7 +117,7 @@ export function ReportsPage({ user, onBack }) {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
       doc.setTextColor(100, 116, 139);
-      doc.text('Conferência com Relógio de Ponto Físico (Knup) • Gerado pelo PontoFlow', 14, 23);
+      doc.text('Conferência com Relógio de Ponto Físico • Gerado pelo PontoFlow', 14, 23);
 
       // Card de Informações da Empresa e Colaborador
       doc.setFillColor(248, 250, 252);
@@ -314,7 +314,7 @@ export function ReportsPage({ user, onBack }) {
         doc.setFontSize(6.5);
         doc.setTextColor(148, 163, 184);
         doc.text(
-          `PontoFlow • Espelho Knup • Documento gerado eletronicamente em ${dataEmissao}`,
+          `PontoFlow • Espelho • Documento gerado eletronicamente em ${dataEmissao}`,
           14,
           290
         );
@@ -327,7 +327,7 @@ export function ReportsPage({ user, onBack }) {
       }
 
       const safeColab = colabNome.replace(/[^a-zA-Z0-9]/g, '_');
-      doc.save(`Espelho_Knup_${safeColab}_${targetAno}_${String(targetMes).padStart(2, '0')}.pdf`);
+      doc.save(`Espelho_${safeColab}_${targetAno}_${String(targetMes).padStart(2, '0')}.pdf`);
     } catch (err) {
       console.error('Erro ao gerar PDF:', err);
       alert('Erro ao gerar arquivo PDF. Tente novamente.');
@@ -371,7 +371,7 @@ export function ReportsPage({ user, onBack }) {
     ]);
 
     let csvContent = '\uFEFF';
-    csvContent += `Espelho de Ponto - PontoFlow / Knup\n`;
+    csvContent += `Espelho de Ponto - PontoFlow \n`;
     csvContent += `Colaborador: ${reportData.colaborador?.nome_completo} | Empresa: ${reportData.colaborador?.empresa}\n`;
     csvContent += `Período: ${MESES[targetMes - 1]} de ${targetAno}\n\n`;
     csvContent += headers.join(';') + '\n';
@@ -384,7 +384,7 @@ export function ReportsPage({ user, onBack }) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `Espelho_Knup_${targetAno}_${String(targetMes).padStart(2, '0')}.csv`);
+    link.setAttribute('download', `Espelho_${targetAno}_${String(targetMes).padStart(2, '0')}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -403,7 +403,7 @@ export function ReportsPage({ user, onBack }) {
           </button>
         </div>
         <div className="pf-header-center">
-          <h1 className="pf-header-title">Espelho de Ponto Knup</h1>
+          <h1 className="pf-header-title">Espelho de Ponto</h1>
           <span className="pf-header-subtitle">{user?.nome_empresa || 'PontoFlow'}</span>
         </div>
         <div className="pf-header-right" style={{ display: 'flex', gap: '4px' }}>
@@ -568,7 +568,7 @@ export function ReportsPage({ user, onBack }) {
           </div>
         )}
 
-        {/* Tabela de Conferência Knup */}
+        {/* Tabela de Conferência */}
         <div className="card" style={{ padding: '0', overflow: 'hidden', marginTop: '8px' }}>
           {loading ? (
             <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>
@@ -581,7 +581,7 @@ export function ReportsPage({ user, onBack }) {
             </div>
           ) : (
             <div className="report-table-wrapper">
-              <table className="knup-table">
+              <table className="table">
                 <thead>
                   <tr>
                     <th>Data</th>

@@ -101,7 +101,7 @@ export function ConfigMenuPage({ user, onNavigate, onOpenInstall }) {
               </div>
               <div className="pf-list-text">
                 <span className="pf-list-title">Guia de configuração do emprego</span>
-                <span className="pf-list-sub">Aprenda a configurar jornada, conferência Knup e mais</span>
+                <span className="pf-list-sub">Aprenda a configurar jornada, conferência e mais</span>
               </div>
             </div>
             <ExternalLink size={16} className="pf-arrow-right" />

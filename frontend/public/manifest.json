@@ -1,7 +1,7 @@
 {
   "short_name": "PontoFlow",
   "name": "PontoFlow - Assistente de Jornada",
-  "description": "Assistente ativo de jornada de trabalho e conferência com relógio Knup",
+  "description": "Assistente ativo de jornada de trabalho e conferência com relógio",
   "icons": [
     {
       "src": "/icon-192.png",

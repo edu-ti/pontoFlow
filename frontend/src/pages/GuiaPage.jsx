@@ -25,7 +25,7 @@ export function GuiaPage({ user, onBack }) {
             Como funciona o PontoFlow:
           </h2>
           <p style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: '1.5' }}>
-            O PontoFlow é o seu assistente inteligente no celular para garantir que você nunca esqueça de bater o ponto físico no relógio Knup.
+            O PontoFlow é o seu assistente inteligente no celular para garantir que você nunca esqueça de bater o ponto físico no relógio.
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '10px' }}>
@@ -34,7 +34,7 @@ export function GuiaPage({ user, onBack }) {
               <div>
                 <strong style={{ color: '#fff' }}>Alerta de Retorno do Almoço:</strong>
                 <div style={{ color: 'var(--text-muted)' }}>
-                  5 minutos antes de expirar seu intervalo, o celular emite bipes sonoros repetitivos e uma tela piscante para você se dirigir ao relógio Knup.
+                  5 minutos antes de expirar seu intervalo, o celular emite bipes sonoros repetitivos e uma tela piscante para você se dirigir ao relógio.
                 </div>
               </div>
             </div>
@@ -52,7 +52,7 @@ export function GuiaPage({ user, onBack }) {
             <div style={{ display: 'flex', gap: '10px', fontSize: '13px' }}>
               <CheckCircle size={18} style={{ color: '#34d399', flexShrink: 0 }} />
               <div>
-                <strong style={{ color: '#fff' }}>Espelho Mensal Knup:</strong>
+                <strong style={{ color: '#fff' }}>Espelho Mensal:</strong>
                 <div style={{ color: 'var(--text-muted)' }}>
                   No final do mês, vá na aba Menu e exporte o espelho para CSV para comparar diretamente com o relatório extraído via pen drive.
                 </div>

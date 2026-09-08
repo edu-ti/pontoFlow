@@ -61,7 +61,7 @@ export function MenuDrawerPage({ user, onNavigate, onLogout, onOpenInstall }) {
           </div>
         </div>
 
-        {/* Grupo de Ações de Relatórios Knup e Instalação */}
+        {/* Grupo de Ações de Relatórios e Instalação */}
         <div className="pf-list-group">
           {/* Instalar Aplicativo no Celular (Android / iOS) */}
           <div 
@@ -89,14 +89,14 @@ export function MenuDrawerPage({ user, onNavigate, onLogout, onOpenInstall }) {
             <ChevronRight size={18} className="pf-arrow-right" />
           </div>
 
-          {/* Relatório e Espelho Knup */}
+          {/* Relatório e Espelho */}
           <div className="pf-list-item" onClick={() => onNavigate('relatorios')}>
             <div className="pf-list-left">
               <div className="pf-badge-icon pf-badge-gear">
                 <FileText size={20} />
               </div>
               <div className="pf-list-text">
-                <span className="pf-list-title">Espelho de Ponto (Knup)</span>
+                <span className="pf-list-title">Espelho de Ponto </span>
                 <span className="pf-list-sub">Visualizar registros mensais lado a lado</span>
               </div>
             </div>

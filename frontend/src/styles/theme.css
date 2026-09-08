@@ -150,19 +150,19 @@ body {
     color: #000000 !important;
   }
 
-  .knup-table th {
+  .table th {
     background-color: #1e293b !important;
     color: #ffffff !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  .knup-table td {
+  .table td {
     color: #1e293b !important;
     border-bottom: 1px solid #e2e8f0 !important;
   }
 
-  .knup-table tr.weekend {
+  .table tr.weekend {
     background-color: #f8fafc !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;

@@ -30,7 +30,7 @@ export function AlarmOverlay({ alarm, onDismiss }) {
           gap: '8px'
         }}>
           <AlertTriangle size={18} style={{ flexShrink: 0, color: '#f87171' }} />
-          <span><strong>Atenção:</strong> Dirija-se imediatamente ao relógio de ponto físico Knup!</span>
+          <span><strong>Atenção:</strong> Dirija-se imediatamente ao relógio de ponto físico!</span>
         </div>
 
         <button 

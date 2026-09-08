@@ -1,6 +1,6 @@
 # ⏰ PontoFlow - Assistente Inteligente de Jornada e Ponto
 
-O **PontoFlow** é um sistema web completo focado em **assistência ativa de jornada de trabalho** (pontualidade através de alertas visuais e sonoros inteligentes no navegador) e **conferência simplificada dos registros** com relógio de ponto físico (**Knup**) no fechamento mensal.
+O **PontoFlow** é um sistema web completo focado em **assistência ativa de jornada de trabalho** (pontualidade através de alertas visuais e sonoros inteligentes no navegador) e **conferência simplificada dos registros** com relógio de ponto físico no fechamento mensal.
 
 Projetado com foco **Mobile-First (PWA)** para atender 98% dos colaboradores que acessam pelo celular.
 
@@ -39,14 +39,14 @@ Projetado com foco **Mobile-First (PWA)** para atender 98% dos colaboradores que
   4. `Fim do Expediente`: Só habilita após a Volta do Almoço ser registrada.
 
 ### 3. Motor de Notificações Ativas (Gatilhos Críticos de 5 Minutos)
-- **Gatilho da Volta do Almoço**: Ao registrar a saída para o almoço, calcula a hora exata de retorno com base no intervalo configurado. **Exatamente 5 minutos antes**, a tela do celular pulsa em alerta visual, o alarme toca repetidamente em alta frequência e uma notificação de SO é enviada avisando para retornar e bater no relógio Knup.
+- **Gatilho da Volta do Almoço**: Ao registrar a saída para o almoço, calcula a hora exata de retorno com base no intervalo configurado. **Exatamente 5 minutos antes**, a tela do celular pulsa em alerta visual, o alarme toca repetidamente em alta frequência e uma notificação de SO é enviada avisando para retornar e bater no relógio.
 - **Gatilho do Fim do Expediente**: Identifica o dia da semana (Segunda a Quinta vs Sexta-feira) e monitora o horário de saída configurado. **Exatamente 5 minutos antes**, dispara o alarme visual, sonoro e push.
 - **Botão Desbloquear Áudio & Testar Alarme**: Permite ao usuário conceder permissão no navegador móvel com 1 toque e testar os bipes previamente.
 
-### 4. Relatórios de Conferência com Relógio Knup
+### 4. Relatórios de Conferência com Relógio
 - Filtros por período: Diário, Semanal e Mensal (com seletor de Mês e Ano).
 - Layout espelho com colunas lado a lado (Entrada 1, Saída Almoço, Volta Almoço, Fim Expediente, Horas Líquidas e Saldo).
-- **Exportação CSV** formatada para abertura direta no Microsoft Excel ou Google Sheets para cruzamento com o arquivo TXT/CSV extraído via pen drive do relógio Knup.
+- **Exportação CSV** formatada para abertura direta no Microsoft Excel ou Google Sheets para cruzamento com o arquivo TXT/CSV extraído via pen drive do relógio.
 - Modo de **Impressão Limpa** (CSS `@media print`).
 
 ---

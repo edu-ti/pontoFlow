@@ -605,7 +605,7 @@ export function DashboardPage({ user }) {
                     <input 
                       type="text" 
                       className="form-input" 
-                      placeholder="Ex: Esqueci de bater no relógio físico Knup"
+                      placeholder="Ex: Esqueci de bater no relógio físico"
                       value={tagObservacao}
                       onChange={(e) => setTagObservacao(e.target.value)}
                     />

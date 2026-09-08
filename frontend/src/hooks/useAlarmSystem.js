@@ -35,7 +35,7 @@ export function useAlarmSystem(todayData, serverTime) {
     const testAlarm = {
       type: 'teste',
       title: '🚨 TESTE DE ALERTA PONTOFLOW',
-      message: 'Este é um teste de alerta visual e sonoro para conferência com o relógio físico Knup.',
+      message: 'Este é um teste de alerta visual e sonoro para conferência com o relógio físico.',
       targetTime: 'Agora'
     };
     setActiveAlarm(testAlarm);
@@ -80,7 +80,7 @@ export function useAlarmSystem(todayData, serverTime) {
         const alarmInfo = {
           type: 'almoco',
           title: '⏰ ATENÇÃO: RETORNO DO ALMOÇO!',
-          message: `Faltam menos de 5 minutos para as ${horaStr}. Prepare-se para retornar e bater no relógio físico Knup!`,
+          message: `Faltam menos de 5 minutos para as ${horaStr}. Prepare-se para retornar e bater no relógio físico!`,
           targetTime: horaStr
         };
 
@@ -115,7 +115,7 @@ export function useAlarmSystem(todayData, serverTime) {
           const alarmInfo = {
             type: 'expediente',
             title: '🏁 HORA DE ENCERRAR O EXPEDIENTE!',
-            message: `Faltam 5 minutos para as ${horarioLimiteStr.slice(0, 5)}. Finalize suas atividades e registre a saída no relógio físico Knup!`,
+            message: `Faltam 5 minutos para as ${horarioLimiteStr.slice(0, 5)}. Finalize suas atividades e registre a saída no relógio físico!`,
             targetTime: horarioLimiteStr.slice(0, 5)
           };
 

@@ -64,7 +64,7 @@ export async function getRelatorios(request, reply) {
         dtFim = sun.toISOString().split('T')[0];
       }
     } else {
-      // Mensal (Padrão para conferência com o relógio Knup)
+      // Mensal (Padrão para conferência com o relógio)
       const daysInMonth = new Date(targetAno, targetMes, 0).getDate();
       dtInicio = `${targetAno}-${String(targetMes).padStart(2, '0')}-01`;
       dtFim = `${targetAno}-${String(targetMes).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
@@ -176,7 +176,7 @@ export async function getRelatorios(request, reply) {
         dia_semana: DIAS_SEMANA_NOMES[dow],
         dia_semana_abrev: DIAS_SEMANA_ABREV[dow],
         eh_fim_semana: dow === 0 || dow === 6,
-        // As 4 batidas correspondentes ao relógio Knup:
+        // As 4 batidas correspondentes ao relógio:
         batida_1_entrada: entrada1 || '-',
         batida_2_saida_almoco: saida1 || '-',
         batida_3_volta_almoco: entrada2 || '-',
