@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   Calendar as CalendarIcon, 
   ChevronLeft, 
@@ -13,7 +14,7 @@ const MONTH_NAMES = [
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
 ];
 
-const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+const WEEKDAYS = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
 
 function parseDateComponents(dateStr) {
   if (!dateStr || typeof dateStr !== 'string') {
@@ -53,7 +54,7 @@ export function CustomDatePicker({
   onClose,
   label, 
   placeholder = 'Selecione uma data',
-  modalTitle = 'Selecione a Data',
+  modalTitle = 'Selecionar Data',
   inline = false
 }) {
   const [isOpen, setIsOpen] = useState(inline);
@@ -67,8 +68,6 @@ export function CustomDatePicker({
   const [viewYear, setViewYear] = useState(selectedParsed.year);
   const [viewMonth, setViewMonth] = useState(selectedParsed.month);
 
-  const containerRef = useRef(null);
-
   // Sincroniza visualização com a data selecionada ao abrir
   useEffect(() => {
     if (isOpen) {
@@ -78,28 +77,23 @@ export function CustomDatePicker({
     }
   }, [isOpen, value]);
 
-  // Fecha o popup ao clicar fora ou apertar Escape
+  // Fecha o popup ao apertar Escape
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isOpen) {
         setIsOpen(false);
+        if (onClose) onClose();
       }
     };
 
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') setIsOpen(false);
-    };
-
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
       document.addEventListener('keydown', handleKeyDown);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen]);
+  }, [isOpen, onClose]);
 
   // Navegação de mês
   const handlePrevMonth = (e) => {
@@ -122,14 +116,14 @@ export function CustomDatePicker({
     }
   };
 
-  // Cálculo da grade do calendário (células de 1 a 31 + preenchimentos)
+  // Cálculo da grade do calendário
   const firstDayOfWeek = new Date(viewYear, viewMonth - 1, 1, 12, 0, 0).getDay();
   const daysInCurrentMonth = new Date(viewYear, viewMonth, 0).getDate();
   const daysInPrevMonth = new Date(viewYear, viewMonth - 1, 0).getDate();
 
   const daysGrid = [];
 
-  // Dias do mês anterior para completar o início da semana
+  // Dias do mês anterior
   for (let i = firstDayOfWeek - 1; i >= 0; i--) {
     const d = daysInPrevMonth - i;
     const prevMonth = viewMonth === 1 ? 12 : viewMonth - 1;
@@ -154,7 +148,7 @@ export function CustomDatePicker({
     });
   }
 
-  // Dias do próximo mês para completar a grade em múltiplo de 7
+  // Dias do próximo mês
   const remainingCells = (7 - (daysGrid.length % 7)) % 7;
   for (let d = 1; d <= remainingCells; d++) {
     const nextMonth = viewMonth === 12 ? 1 : viewMonth + 1;
@@ -193,6 +187,11 @@ export function CustomDatePicker({
     handleSelectDay(yestYMD);
   };
 
+  const handleClose = () => {
+    setIsOpen(false);
+    if (onClose) onClose();
+  };
+
   // Texto formatado para exibição amigável: "07/09/2026 (Segunda-feira)"
   const formatFriendlyDate = (dateStr) => {
     if (!dateStr) return placeholder;
@@ -208,14 +207,126 @@ export function CustomDatePicker({
     return `${dStr}/${mStr}/${year} (${dayName})`;
   };
 
+  // Conteúdo do Calendário
+  const calendarContent = (
+    <div className="custom-calendar-card" onClick={(e) => e.stopPropagation()}>
+      {/* Barra de Título Superior com Botão Fechar X */}
+      <div className="custom-calendar-topbar">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <CalendarIcon size={18} style={{ color: '#38bdf8' }} />
+          <span style={{ fontSize: '15px', fontWeight: 700, color: '#ffffff' }}>
+            {modalTitle}
+          </span>
+        </div>
+        <button 
+          type="button" 
+          className="cal-close-icon-btn" 
+          onClick={handleClose}
+          title="Fechar calendário"
+        >
+          <X size={18} />
+        </button>
+      </div>
+
+      {/* Cabeçalho do Mês e Navegação */}
+      <div className="custom-calendar-header">
+        <button 
+          type="button" 
+          className="cal-nav-btn" 
+          onClick={handlePrevMonth}
+          title="Mês anterior"
+        >
+          <ChevronLeft size={18} />
+        </button>
+        <div className="cal-header-title">
+          <strong>{MONTH_NAMES[viewMonth - 1]}</strong>
+          <span>{viewYear}</span>
+        </div>
+        <button 
+          type="button" 
+          className="cal-nav-btn" 
+          onClick={handleNextMonth}
+          title="Próximo mês"
+        >
+          <ChevronRight size={18} />
+        </button>
+      </div>
+
+      {/* Cabeçalho dos Dias da Semana */}
+      <div className="custom-calendar-weekdays">
+        {WEEKDAYS.map((wd, index) => (
+          <div 
+            key={wd} 
+            className={`cal-weekday-cell ${index === 0 || index === 6 ? 'weekend' : ''}`}
+          >
+            {wd}
+          </div>
+        ))}
+      </div>
+
+      {/* Grade dos Dias */}
+      <div className="custom-calendar-grid">
+        {daysGrid.map((item, idx) => {
+          const isSelected = item.ymd === value;
+          const isToday = item.ymd === todayYMD;
+
+          let cellClass = 'cal-day-cell';
+          if (!item.isCurrentMonth) cellClass += ' other-month';
+          if (isSelected) cellClass += ' selected';
+          if (isToday) cellClass += ' today';
+
+          return (
+            <button
+              type="button"
+              key={`${item.ymd}-${idx}`}
+              className={cellClass}
+              onClick={() => handleSelectDay(item.ymd)}
+            >
+              <span className="day-number">{item.day}</span>
+              {isToday && !isSelected && <span className="today-dot"></span>}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Rodapé com Atalhos Rápidos */}
+      <div className="custom-calendar-footer">
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button 
+            type="button" 
+            className="cal-quick-btn" 
+            onClick={handleSelectToday}
+          >
+            Hoje
+          </button>
+          <button 
+            type="button" 
+            className="cal-quick-btn" 
+            onClick={handleSelectYesterday}
+          >
+            Ontem
+          </button>
+        </div>
+        <button 
+          type="button" 
+          className="btn-primary" 
+          style={{ fontSize: '12px', padding: '6px 16px', borderRadius: '8px', height: '32px' }}
+          onClick={handleClose}
+        >
+          Confirmar
+        </button>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="custom-datepicker-container" ref={containerRef}>
+    <div className="custom-datepicker-container">
       {/* Botão de Disparo Estilizado (oculto quando inline) */}
       {!inline && (
         <button
           type="button"
           className={`custom-datepicker-trigger ${isOpen ? 'focused' : ''}`}
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={() => setIsOpen(true)}
           aria-haspopup="dialog"
           aria-expanded={isOpen}
         >
@@ -227,110 +338,21 @@ export function CustomDatePicker({
               {formatFriendlyDate(value)}
             </span>
           </div>
-          <span className="datepicker-chevron">{isOpen ? '▲' : '▼'}</span>
+          <span className="datepicker-chevron">▼</span>
         </button>
       )}
 
-      {/* Popover do Calendário Dark Moderno */}
-      {(isOpen || inline) && (
-        <div 
-          className="custom-calendar-popover" 
-          role="dialog" 
-          aria-modal="true"
-          style={inline ? { position: 'relative', top: 0, left: 0, right: 0, width: '100%', boxSizing: 'border-box' } : {}}
-        >
-          {/* Cabeçalho do Mês e Navegação */}
-          <div className="custom-calendar-header">
-            <button 
-              type="button" 
-              className="cal-nav-btn" 
-              onClick={handlePrevMonth}
-              title="Mês anterior"
-            >
-              <ChevronLeft size={18} />
-            </button>
-            <div className="cal-header-title">
-              <strong>{MONTH_NAMES[viewMonth - 1]}</strong>
-              <span>{viewYear}</span>
-            </div>
-            <button 
-              type="button" 
-              className="cal-nav-btn" 
-              onClick={handleNextMonth}
-              title="Próximo mês"
-            >
-              <ChevronRight size={18} />
-            </button>
-          </div>
-
-          {/* Cabeçalho dos Dias da Semana */}
-          <div className="custom-calendar-weekdays">
-            {WEEKDAYS.map((wd, index) => (
-              <div 
-                key={wd} 
-                className={`cal-weekday-cell ${index === 0 || index === 6 ? 'weekend' : ''}`}
-              >
-                {wd}
-              </div>
-            ))}
-          </div>
-
-          {/* Grade dos Dias */}
-          <div className="custom-calendar-grid">
-            {daysGrid.map((item, idx) => {
-              const isSelected = item.ymd === value;
-              const isToday = item.ymd === todayYMD;
-
-              let cellClass = 'cal-day-cell';
-              if (!item.isCurrentMonth) cellClass += ' other-month';
-              if (isSelected) cellClass += ' selected';
-              if (isToday) cellClass += ' today';
-
-              return (
-                <button
-                  type="button"
-                  key={`${item.ymd}-${idx}`}
-                  className={cellClass}
-                  onClick={() => handleSelectDay(item.ymd)}
-                >
-                  <span className="day-number">{item.day}</span>
-                  {isToday && !isSelected && <span className="today-dot"></span>}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Rodapé com Atalhos Rápidos */}
-          <div className="custom-calendar-footer">
-            <div style={{ display: 'flex', gap: '6px' }}>
-              <button 
-                type="button" 
-                className="cal-quick-btn" 
-                onClick={handleSelectToday}
-              >
-                Hoje
-              </button>
-              <button 
-                type="button" 
-                className="cal-quick-btn" 
-                onClick={handleSelectYesterday}
-              >
-                Ontem
-              </button>
-            </div>
-            <button 
-              type="button" 
-              className="cal-close-btn" 
-              onClick={() => {
-                setIsOpen(false);
-                if (onClose) onClose();
-              }}
-            >
-              Fechar
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Renderização Centralizada na Tela via Portal (ou Inline) */}
+      {inline ? (
+        calendarContent
+      ) : isOpen && typeof document !== 'undefined' ? (
+        createPortal(
+          <div className="custom-calendar-backdrop" onClick={handleClose}>
+            {calendarContent}
+          </div>,
+          document.body
+        )
+      ) : null}
     </div>
   );
 }
