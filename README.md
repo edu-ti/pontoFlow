@@ -115,3 +115,14 @@ Acesse `http://localhost:5173`.
 2. No Chrome: Toque no menu (3 pontinhos) e selecione **"Adicionar à tela inicial"** ou **"Instalar aplicativo"**.
 3. No Safari (iOS): Toque no ícone de compartilhamento e selecione **"Adicionar à Tela de Início"**.
 4. O PontoFlow abrirá em modo tela cheia nativo, sem barra de navegação do browser.
+
+### Notifica??es em segundo plano
+
+Os avisos de retorno do almo?o e fim do expediente s?o enviados pelo servidor via **Web Push**, chegando mesmo com o PontoFlow fechado. Antes do primeiro deploy, gere um par VAPID uma ?nica vez e configure-o no `.env` ou no Coolify:
+
+```bash
+cd backend
+npx web-push generate-vapid-keys
+```
+
+Copie as chaves exibidas para `VAPID_PUBLIC_KEY` e `VAPID_PRIVATE_KEY`; defina tamb?m `VAPID_SUBJECT` com um endere?o `mailto:`. Ap?s o deploy, abra o PontoFlow, permita as notifica??es e mantenha o app instalado no celular. Em iPhone/iPad, o PWA precisa estar adicionado ? Tela de In?cio para receber Web Push.

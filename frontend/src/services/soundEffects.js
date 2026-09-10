@@ -193,7 +193,13 @@ export function sendNotification(title, body, tag = 'pontoflow') {
         requireInteraction: true,
         vibrate: [200, 100, 200]
       };
-      new Notification(title, options);
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready
+          .then((registration) => registration.showNotification(title, options))
+          .catch(() => new Notification(title, options));
+      } else {
+        new Notification(title, options);
+      }
     }
   } catch (err) {
     console.warn('[NOTIFICATION] Erro ao disparar notificação:', err);

@@ -115,6 +115,39 @@ export async function initDbSchema() {
     `);
 
     // 5. Índices de performance
+    // Background Web Push subscriptions and delivery state
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS push_subscriptions (
+          id SERIAL PRIMARY KEY,
+          usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+          endpoint TEXT NOT NULL UNIQUE,
+          p256dh TEXT NOT NULL,
+          auth TEXT NOT NULL,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS preferencias_notificacao (
+          usuario_id INTEGER PRIMARY KEY REFERENCES usuarios(id) ON DELETE CASCADE,
+          preferencias JSONB NOT NULL DEFAULT '{"horaComecar": true, "horaIntervalo": true, "horaRetornar": true, "horaIrParaCasa": true}'::jsonb,
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS notificacoes_enviadas (
+          id SERIAL PRIMARY KEY,
+          usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+          tipo VARCHAR(40) NOT NULL,
+          data_referencia DATE NOT NULL,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          CONSTRAINT unq_notificacao_usuario_tipo_dia UNIQUE (usuario_id, tipo, data_referencia)
+      );
+    `);
+
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_push_subscriptions_usuario ON push_subscriptions(usuario_id);`).catch(() => {});
     await client.query(`CREATE INDEX IF NOT EXISTS idx_usuarios_empresa ON usuarios(empresa_id);`).catch(() => {});
     await client.query(`CREATE INDEX IF NOT EXISTS idx_registros_usuario_data ON registros_ponto(usuario_id, data_registro);`).catch(() => {});
     await client.query(`CREATE INDEX IF NOT EXISTS idx_registros_data ON registros_ponto(data_registro);`).catch(() => {});

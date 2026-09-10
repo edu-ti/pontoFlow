@@ -6,6 +6,8 @@ import {
   playSuccessChime,
   setSoundEnabled
 } from '../services/soundEffects';
+import { enableBackgroundNotifications } from '../services/pushNotifications';
+import { api } from '../services/api';
 
 export function NotificationSettingsPage({ user, onBack }) {
   const companyName = user?.nome_empresa || 'Empresa';
@@ -47,12 +49,15 @@ export function NotificationSettingsPage({ user, onBack }) {
     const currentPrefs = JSON.parse(localStorage.getItem('pontoflow_notif_prefs') || '{}');
     currentPrefs[key] = newVal;
     localStorage.setItem('pontoflow_notif_prefs', JSON.stringify(currentPrefs));
+    api.notifications.updatePreferences({ [key]: newVal }).catch(() => {});
 
     // Se estiver ativando, garante permissão de áudio, push e salva som como ativado
     if (newVal) {
       setSoundEnabled(true);
       initAudioContext();
-      requestNotificationPermission();
+      requestNotificationPermission().then((permission) => {
+        if (permission === 'granted') enableBackgroundNotifications();
+      });
     }
   };
 

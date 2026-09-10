@@ -7,6 +7,8 @@ import authRoutes from './routes/authRoutes.js';
 import pontoRoutes from './routes/pontoRoutes.js';
 import relatorioRoutes from './routes/relatorioRoutes.js';
 import marcadoresRoutes from './routes/marcadoresRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
+import { configureWebPush, startNotificationScheduler } from './services/pushService.js';
 
 dotenv.config();
 process.env.TZ = 'America/Sao_Paulo';
@@ -47,6 +49,7 @@ await app.register(authRoutes, { prefix: '/api/auth' });
 await app.register(pontoRoutes, { prefix: '/api/ponto' });
 await app.register(relatorioRoutes, { prefix: '/api/relatorios' });
 await app.register(marcadoresRoutes, { prefix: '/api/marcadores' });
+await app.register(notificationRoutes, { prefix: '/api/notifications' });
 
 // Inicialização do Servidor
 const PORT = parseInt(process.env.PORT || '3001', 10);
@@ -57,6 +60,9 @@ async function start() {
     console.log('[STARTUP] Verificando conexão com o banco de dados PostgreSQL...');
     await testConnection();
     await initDbSchema();
+
+    configureWebPush();
+    startNotificationScheduler();
 
     await app.listen({ port: PORT, host: HOST });
     console.log(`🚀 [PONTOFLOW BACKEND] Servidor rodando em http://${HOST}:${PORT}`);

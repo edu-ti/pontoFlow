@@ -80,6 +80,17 @@ export const api = {
       body: JSON.stringify(profileData)
     })
   },
+  notifications: {
+    getConfig: () => request('/notifications/config'),
+    subscribe: (subscription) => request('/notifications/subscriptions', {
+      method: 'POST',
+      body: JSON.stringify(subscription)
+    }),
+    updatePreferences: (preferences) => request('/notifications/preferences', {
+      method: 'PUT',
+      body: JSON.stringify(preferences)
+    })
+  },
   ponto: {
     getToday: () => request('/ponto/today'),
     bater: (tipo, observacao = '') => request('/ponto/bater', {

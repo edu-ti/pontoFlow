@@ -12,6 +12,7 @@ import { GuiaPage } from './pages/GuiaPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { MenuDrawerPage } from './pages/MenuDrawerPage';
 import { InstallAppModal } from './components/InstallAppModal';
+import { enableBackgroundNotifications } from './services/pushNotifications';
 
 export function App() {
   const [token, setCurrentToken] = useState(getToken());
@@ -27,6 +28,10 @@ export function App() {
   // Controle de Instalação PWA (Android / iOS)
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [installModalOpen, setInstallModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (token) enableBackgroundNotifications();
+  }, [token]);
 
   useEffect(() => {
     // Captura o evento nativo de instalação do Android / Chrome
