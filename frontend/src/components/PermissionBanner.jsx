@@ -7,6 +7,7 @@ import {
   isSoundEnabled,
   setSoundEnabled
 } from '../services/soundEffects';
+import { enableBackgroundNotifications } from '../services/pushNotifications';
 
 export function PermissionBanner({ onTestAlarm }) {
   // Inicializa o estado lendo diretamente a preferência persistida
@@ -40,6 +41,10 @@ export function PermissionBanner({ onTestAlarm }) {
     const perm = await requestNotificationPermission();
     if (perm === 'granted') {
       setNotifGranted(true);
+      // A permissão do navegador, sozinha, permite apenas os alertas com a
+      // página aberta. Registra este dispositivo no Web Push para que o
+      // servidor também consiga avisar com o PontoFlow fechado.
+      await enableBackgroundNotifications();
     }
   };
 

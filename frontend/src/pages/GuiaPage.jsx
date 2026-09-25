@@ -34,7 +34,7 @@ export function GuiaPage({ user, onBack }) {
               <div>
                 <strong style={{ color: '#fff' }}>Alerta de Retorno do Almoço:</strong>
                 <div style={{ color: 'var(--text-muted)' }}>
-                  5 minutos antes de expirar seu intervalo, o celular emite bipes sonoros repetitivos e uma tela piscante para você se dirigir ao relógio.
+                  Ao expirar seu intervalo, o celular emite um alerta para você se dirigir ao relógio.
                 </div>
               </div>
             </div>

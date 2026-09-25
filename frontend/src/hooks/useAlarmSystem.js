@@ -66,8 +66,8 @@ export function useAlarmSystem(todayData, serverTime) {
       const intervalo = jornada?.tempo_intervalo_minutos || 60;
       const voltaPrevistaMin = (saidaAlmocoMin + intervalo) % 1440;
 
-      // Exatamente 5 minutos antes da volta
-      const alertaAlmocoMin = (voltaPrevistaMin - 5 + 1440) % 1440;
+      // No horário exato de retorno do intervalo.
+      const alertaAlmocoMin = voltaPrevistaMin;
 
       // Se o horário atual estiver entre o horário de alerta e até 10 minutos após o retorno previsto
       const isHoraDoAlerta = (currentTotalMin >= alertaAlmocoMin && currentTotalMin <= voltaPrevistaMin + 10);
@@ -80,7 +80,7 @@ export function useAlarmSystem(todayData, serverTime) {
         const alarmInfo = {
           type: 'almoco',
           title: '⏰ ATENÇÃO: RETORNO DO ALMOÇO!',
-          message: `Faltam menos de 5 minutos para as ${horaStr}. Prepare-se para retornar e bater no relógio físico!`,
+          message: `Seu intervalo terminou às ${horaStr}. Registre agora sua volta no relógio físico.`,
           targetTime: horaStr
         };
 

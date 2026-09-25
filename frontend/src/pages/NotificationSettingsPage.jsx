@@ -134,8 +134,8 @@ export function NotificationSettingsPage({ user, onBack }) {
             </label>
           </div>
           <div style={{ padding: '0 16px 12px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-            <span style={{ fontSize: '11px', color: 'var(--text-dim)' }}>Notificar antes sobre o retorno: </span>
-            <span style={{ fontSize: '12px', color: '#38bdf8', fontWeight: 600 }}>Exatamente 5 minutos antes</span>
+            <span style={{ fontSize: '11px', color: 'var(--text-dim)' }}>Notificar sobre o retorno: </span>
+            <span style={{ fontSize: '12px', color: '#38bdf8', fontWeight: 600 }}>No horário de retorno</span>
           </div>
 
           {/* 4. Hora de ir para casa */}

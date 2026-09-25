@@ -17,8 +17,12 @@ export async function enableBackgroundNotifications() {
     const registration = await navigator.serviceWorker.ready;
     let subscription = await registration.pushManager.getSubscription();
 
+    const { publicKey } = await api.notifications.getConfig();
+    if (!publicKey) {
+      throw new Error('Web Push não está configurado no servidor.');
+    }
+
     if (!subscription) {
-      const { publicKey } = await api.notifications.getConfig();
       subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(publicKey)

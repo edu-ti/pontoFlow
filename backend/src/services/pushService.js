@@ -38,9 +38,9 @@ async function getDueNotifications() {
         'almoco' AS tipo,
         'lunch-alarm' AS tag,
         '⏰ ATENÇÃO: RETORNO DO ALMOÇO!' AS titulo,
-        'Faltam menos de 5 minutos para as ' || TO_CHAR(
+        'Seu intervalo terminou às ' || TO_CHAR(
           r.saida_almoco + (u.tempo_intervalo_minutos || ' minutes')::INTERVAL, 'HH24:MI'
-        ) || '. Prepare-se para retornar e bater no relógio físico!' AS mensagem
+        ) || '. Registre agora sua volta do intervalo no relógio físico.' AS mensagem
       FROM registros_ponto r
       JOIN usuarios u ON u.id = r.usuario_id
       LEFT JOIN preferencias_notificacao pn ON pn.usuario_id = r.usuario_id
@@ -49,7 +49,7 @@ async function getDueNotifications() {
         AND r.saida_almoco IS NOT NULL
         AND r.volta_almoco IS NULL
         AND COALESCE((pn.preferencias ->> 'horaRetornar')::BOOLEAN, TRUE)
-        AND clock.now_local >= r.data_registro + r.saida_almoco + ((u.tempo_intervalo_minutos - 5) || ' minutes')::INTERVAL
+        AND clock.now_local >= r.data_registro + r.saida_almoco + (u.tempo_intervalo_minutos || ' minutes')::INTERVAL
         AND clock.now_local < r.data_registro + r.saida_almoco + ((u.tempo_intervalo_minutos + 15) || ' minutes')::INTERVAL
 
       UNION ALL

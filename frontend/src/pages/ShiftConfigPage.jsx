@@ -210,7 +210,7 @@ export function ShiftConfigPage({ onSaveComplete, isInitialSetup = false }) {
               />
             </div>
             <span style={{ fontSize: '11px', color: 'var(--text-dim)' }}>
-              Ao bater a saída de almoço, o alarme tocará 5min antes de expirar este tempo.
+              Ao bater a saída de almoço, o alarme tocará ao expirar este tempo.
             </span>
           </div>
 
